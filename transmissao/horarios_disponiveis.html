@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Horários da Transmissão</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
+  <link rel="stylesheet" href="../extra/css/principal.css" />
+  <style>
+    .card+.card {
+      margin-top: 1rem;
+    }
+
+    .flatpickr-input {
+      width: 120px;
+    }
+  </style>
+</head>
+
+<body class="bg-light py-4">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+        <div class="card shadow-sm border-0 p-4">
+          <h2 class="mb-4 text-center">
+            <i class="bi bi-clock-history me-2 text-primary"></i>
+            Horários da Transmissão
+          </h2>
+          <form id="horario-form">
+            <div id="dias-container" class="mb-3">
+              <div class="d-flex align-items-center justify-content-center gap-3 py-4 text-secondary">
+                <div class="spinner-border text-primary" role="status" aria-hidden="true"></div>
+                <span>Carregando horários disponíveis...</span>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label for="observacao" class="form-label fw-semibold">Observação</label>
+              <textarea id="observacao" name="observacao" class="form-control" rows="3" required
+                placeholder="Descreva brevemente o motivo da solicitação, ou qualquer detalhe relevante."></textarea>
+            </div>
+            <div class="d-grid">
+              <button type="submit" class="btn btn-danger btn-lg">
+                <span class="spinner-border spinner-border-sm me-2 d-none" role="status" aria-hidden="true"></span>
+                <span>Enviar</span>
+              </button>
+            </div>
+          </form>
+          <div id="mensagem" class="alert mt-3 d-none"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../extra/js/logout.js"></script>
+  <script src="../extra/js/fetchComToken.js"></script>
+  <script src="../extra/js/refreshAccessToken.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pt.js"></script>
+  <script>
+    let diasValidos = [];
+
+    function formatarData(dataISO) {
+      const data = new Date(`${dataISO}T00:00:00-03:00`);
+      const opcoes = { weekday: "long", day: "2-digit", month: "2-digit", year: "numeric", timeZone: "America/Sao_Paulo" };
+      const formatado = data.toLocaleDateString("pt-BR", opcoes);
+      return formatado.charAt(0).toUpperCase() + formatado.slice(1);
+    }
+
+    function setLoadingButton(btn, loading, texto = "Enviar") {
+      const spinner = btn.querySelector(".spinner-border");
+      const label = btn.querySelector("span:last-child");
+      if (loading) {
+        btn.disabled = true;
+        spinner.classList.remove("d-none");
+        label.textContent = "Processando...";
+      } else {
+        spinner.classList.add("d-none");
+        btn.disabled = false;
+        label.textContent = texto;
+      }
+    }
+
+    function showMsg(texto, tipo = "danger") {
+      const mensagem = document.getElementById("mensagem");
+      mensagem.className = `alert alert-${tipo} mt-3`;
+      mensagem.textContent = texto;
+      mensagem.classList.remove("d-none");
+    }
+
+    async function carregarHorarios() {
+      try {
+        let response = await fetchComToken("/backend/transmissao/horarios_disponiveis/");
+        if (response.status === 401) {
+          await refreshAccessToken();
+          return carregarHorarios();
+        }
+        if (response.status === 403) {
+          document.getElementById("horario-form").classList.add("d-none");
+          showMsg("Acesso não autorizado.", "danger");
+          return;
+        }
+
+        const data = await response.json();
+        const container = document.getElementById("dias-container");
+        container.innerHTML = "";
+        diasValidos = [];
+
+        if (!response.ok || !data.dias || !data.dias.length) {
+          document.getElementById("horario-form").classList.add("d-none");
+          showMsg(data.detail || "Nenhum horário disponível.", "warning");
+          return;
+        }
+
+        data.dias.forEach((dia) => {
+          const card = document.createElement("div");
+          card.className = "card card-body";
+
+          const titulo = document.createElement("h5");
+          const horariosStr = dia.horarios.length
+            ? dia.horarios.map((h) => `${h.inicio}–${h.fim}`).join(", ")
+            : "Indisponível";
+          titulo.textContent = `${formatarData(dia.data)} (${horariosStr})`;
+          card.appendChild(titulo);
+
+          if (dia.horarios.length) {
+            diasValidos.push(dia.data);
+            const minTime = dia.horarios[0].inicio;
+            const maxTime = dia.horarios[dia.horarios.length - 1].fim;
+
+            const inputInicio = document.createElement("input");
+            inputInicio.type = "text";
+            inputInicio.className = "form-control timepicker my-1";
+            inputInicio.name = `inicio_${dia.data}`;
+            inputInicio.placeholder = "Início";
+            inputInicio.value = minTime;
+
+            const inputFim = document.createElement("input");
+            inputFim.type = "text";
+            inputFim.className = "form-control timepicker my-1";
+            inputFim.name = `fim_${dia.data}`;
+            inputFim.placeholder = "Fim";
+            inputFim.value = maxTime;
+
+            card.appendChild(inputInicio);
+            card.appendChild(inputFim);
+
+            setTimeout(() => {
+              flatpickr(inputInicio, {
+                enableTime: true,
+                noCalendar: true,
+                dateFormat: "H:i",
+                time_24hr: true,
+                minuteIncrement: 15,
+                minTime: minTime,
+                maxTime: maxTime,
+                locale: "pt",
+              });
+              flatpickr(inputFim, {
+                enableTime: true,
+                noCalendar: true,
+                dateFormat: "H:i",
+                time_24hr: true,
+                minuteIncrement: 15,
+                minTime: minTime,
+                maxTime: maxTime,
+                locale: "pt",
+              });
+            }, 0);
+          }
+
+          container.appendChild(card);
+        });
+      } catch (error) {
+        console.error(error);
+        document.getElementById("horario-form").classList.add("d-none");
+        showMsg("Erro ao carregar horários disponíveis.", "danger");
+      }
+    }
+
+    async function enviarHorarios(e) {
+      e.preventDefault();
+      const observacao = document.getElementById("observacao").value.trim();
+      if (!observacao) {
+        showMsg("Por favor, preencha a observação.", "warning");
+        return;
+      }
+
+      const horarios = diasValidos.map((data) => {
+        const ini = document.querySelector(`[name="inicio_${data}"]`)?.value;
+        const fim = document.querySelector(`[name="fim_${data}"]`)?.value;
+        return ini && fim ? { data, inicio: ini, fim: fim } : null;
+      }).filter(Boolean);
+
+      if (!horarios.length) {
+        showMsg("Você deve selecionar pelo menos um horário.", "warning");
+        return;
+      }
+
+      const btn = e.target.querySelector("button[type='submit']");
+      setLoadingButton(btn, true);
+
+      try {
+        let response = await fetchComToken("/backend/transmissao/horarios_disponiveis/", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ horarios, observacao }),
+        });
+        if (response.status === 401) {
+          await refreshAccessToken();
+          return enviarHorarios(e);
+        }
+        if (response.status === 403) {
+          showMsg("Acesso não autorizado para enviar horários.", "danger");
+          return;
+        }
+        if (!response.ok) {
+          const data = await response.json();
+          showMsg(data.detail || "Erro ao enviar horários.", "danger");
+          return;
+        }
+        window.location.href = "confirmacao.html";
+      } catch (error) {
+        console.error(error);
+        showMsg("Erro ao enviar horários.", "danger");
+      } finally {
+        setLoadingButton(btn, false);
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        logout();
+      } else {
+        await carregarHorarios();
+        document.getElementById("horario-form").addEventListener("submit", enviarHorarios);
+      }
+    });
+  </script>
+</body>
+
+</html>

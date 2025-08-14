@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="pt-br">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Relatório Moodle</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" />
+  <link rel="stylesheet" href="../../extra/css/principal.css" />
+
+  <style>
+    @media print {
+
+      /* Esconde botões, mensagens de erro e outros elementos desnecessários para impressão */
+      .btn,
+      #error-message,
+      .no-print {
+        display: none !important;
+      }
+
+      /* Remove margens e paddings padrão do body */
+      body {
+        margin: 10mm !important;
+        padding: 10mm !important;
+        font-size: 11pt;
+      }
+
+      /* Ajusta o layout para ocupar toda a largura da página */
+      .container,
+      .container-fluid,
+      .row,
+      [class*="col-"] {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+
+      /* Estilo para a tabela do relatório */
+      table {
+        width: 100% !important;
+        border-collapse: collapse;
+        table-layout: auto;
+        font-size: 10pt;
+      }
+
+      th,
+      td {
+        padding: 4px !important;
+        margin: 0 !important;
+      }
+
+      tr {
+        page-break-inside: avoid !important;
+      }
+
+      /* Ajustes nas tabelas de cada coordenador/pessoa */
+      .card {
+        page-break-inside: avoid;
+        border: none;
+        padding: 0;
+        margin: 0 0 1rem 0;
+      }
+
+      /* Cabeçalhos (h2, h5, h6) */
+      h2,
+      h5,
+      h6 {
+        margin-bottom: 0.5rem;
+      }
+
+      /* Ajusta o fundo e os bordes das seções do relatório */
+      .inativo {
+        background-color: #f8d7da !important;
+        color: #842029 !important;
+      }
+
+      /* Remover margens de elementos no corpo do relatório */
+      .no-print {
+        display: none !important;
+      }
+
+      /* Define as margens da página de impressão */
+      @page {
+        margin: 0;
+      }
+
+      /* Ajusta o conteúdo das tabelas */
+      .table th,
+      .table td {
+        font-size: 9pt;
+      }
+
+      /* Ajusta a largura das colunas da tabela */
+      .table-sm td,
+      .table-sm th {
+        padding: 3px;
+        font-size: 8pt;
+      }
+
+      /* Limita o espaçamento interno das tabelas */
+      .table td,
+      .table th {
+        padding: 4px !important;
+      }
+
+      /* Ajustes adicionais para o layout do conteúdo */
+      .container {
+        padding-left: 0;
+        padding-right: 0;
+      }
+
+      /* Adiciona um espaçamento adequado no fundo da página */
+      @page {
+        margin-top: 15mm !important;
+        margin-bottom: 15mm !important;
+        /* Ajuste de margem inferior */
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4 no-print">
+      <div>
+        <a id="voltarBtn" href="selecao.html" class="btn btn-secondary me-2">
+          <i class="bi bi-arrow-left-circle"></i> Voltar
+        </a>
+        <button onclick="window.print()" class="btn btn-outline-primary">
+          <i class="bi bi-printer"></i> Imprimir
+        </button>
+      </div>
+    </div>
+
+    <div id="mensagem"></div>
+    <div id="conteudo-relatorio"></div>
+  </div>
+
+  <script src="../../extra/js/logout.js"></script>
+  <script src="../../extra/js/fetchComToken.js"></script>
+  <script src="../../extra/js/refreshAccessToken.js"></script>
+  <script>
+    async function carregarRelatorio() {
+      function getParam(nome) {
+        const params = new URLSearchParams(window.location.search);
+        return params.get(nome);
+      }
+
+      function diasEntre(data1, data2) {
+        const msPorDia = 1000 * 60 * 60 * 24;
+        return Math.floor((data1 - data2) / msPorDia);
+      }
+
+      const id = getParam("id");
+      if (id) {
+        const voltarBtn = document.getElementById("voltarBtn");
+        voltarBtn.href = `selecao.html?id=${id}`;
+      } else {
+        document.getElementById("mensagem").innerHTML =
+          "<div class='alert alert-danger'><i class='bi bi-exclamation-circle'></i> ID do relatório não informado.</div>";
+        return;
+      }
+
+      const token = localStorage.getItem("token");
+      if (!token) {
+        document.getElementById("mensagem").innerHTML =
+          "<div class='alert alert-warning'><i class='bi bi-exclamation-triangle'></i> Você precisa estar logado.</div>";
+        return;
+      }
+
+      const cursos = getParam("cursos") ? getParam("cursos").split(",") : [];
+      if (cursos.length === 0) {
+        document.getElementById("mensagem").innerHTML =
+          "<div class='alert alert-danger'><i class='bi bi-exclamation-circle'></i> Nenhum curso selecionado.</div>";
+        return;
+      }
+
+      try {
+        const url = `/backend/moodle/relatorio/${id}/?cursos=${cursos.join(
+          ",",
+        )}`;
+        const response = await fetchComToken(url, {
+          method: "GET",
+          credentials: "include",
+        });
+
+        if (!response.ok) throw new Error("Erro ao buscar relatório");
+
+        const dados = await response.json();
+        const container = document.getElementById("conteudo-relatorio");
+        container.innerHTML = "";
+
+        if (dados.length === 0) {
+          container.innerHTML =
+            '<div class="alert alert-info"><i class="bi bi-info-circle"></i> Nenhum dado disponível para este relatório.</div>';
+          return;
+        }
+
+        dados.forEach((coordenador, indexCoord) => {
+          const blocoCoordenador = document.createElement("div");
+          blocoCoordenador.className = "mb-5";
+          blocoCoordenador.innerHTML = `<h3 class="mb-4">Frequência lançada por ${coordenador.coordenador}</h3>`;
+
+          coordenador.cursos.forEach((curso, indexCurso) => {
+            const blocoCurso = document.createElement("div");
+            blocoCurso.className = "mb-4";
+            blocoCurso.innerHTML = `<h4 class="mb-3">${curso.nome}</h4>`;
+
+            curso.pessoas.forEach((pessoa) => {
+              const blocoPessoa = document.createElement("div");
+              blocoPessoa.className = "mb-3";
+              blocoPessoa.setAttribute("data-pessoa", pessoa.pessoa);
+
+              const linhas = pessoa.registros
+                .map((reg) => {
+                  const acesso = reg.ultimo_acesso
+                    ? new Date(reg.ultimo_acesso)
+                    : null;
+                  const consulta = new Date(reg.data_consulta);
+                  const dias = acesso ? diasEntre(consulta, acesso) : 9999;
+                  const inativo = dias > 30;
+                  const destaque = inativo
+                    ? 'style="background-color:#f8d7da; color:#842029;"'
+                    : "";
+                  return `
+                                    <tr>
+                                        <td ${destaque}>${reg.moodle_id}</td>
+                                        <td ${destaque}>${acesso
+                      ? acesso.toLocaleString()
+                      : "N/A"
+                    }</td>
+                                        <td ${destaque}>${consulta.toLocaleString()}</td>
+                                    </tr>
+                                `;
+                })
+                .join("");
+
+              const tabela = `
+                                <h5>${pessoa.pessoa}</h5>
+                                <table class="table table-sm table-bordered table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Login Moodle</th>
+                                            <th>Último Acesso</th>
+                                            <th>Data da Consulta</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${linhas}
+                                    </tbody>
+                                </table>
+                            `;
+
+              blocoPessoa.innerHTML = tabela;
+              blocoCurso.appendChild(blocoPessoa);
+            });
+
+            blocoCoordenador.appendChild(blocoCurso);
+          });
+
+          container.appendChild(blocoCoordenador);
+        });
+      } catch (erro) {
+        document.getElementById("mensagem").innerHTML =
+          `<div class='alert alert-danger'><i class='bi bi-exclamation-circle'></i> ${erro.message}</div>`;
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", carregarRelatorio);
+  </script>
+</body>
+
+</html>

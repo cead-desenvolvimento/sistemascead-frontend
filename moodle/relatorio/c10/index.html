@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Relatório C10 - Último Login Bolsistas</title>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" />
+  <link rel="stylesheet" href="../../../extra/css/principal.css" />
+
+  <style>
+    /* Impressão */
+    @media print {
+      .no-print {
+        display: none !important;
+      }
+
+      body {
+        margin: 10mm !important;
+        padding: 10mm !important;
+        font-size: 11pt;
+      }
+
+      table {
+        width: 100% !important;
+        border-collapse: collapse;
+        font-size: 10pt;
+      }
+
+      th,
+      td {
+        padding: 4px !important;
+      }
+
+      tr {
+        page-break-inside: avoid !important;
+      }
+
+      .nunca-acessou {
+        background-color: #f8d7da !important;
+        color: #842029 !important;
+      }
+
+      .acesso-antigo {
+        background-color: #fff3cd !important;
+        color: #997404 !important;
+      }
+    }
+
+    /* Cores de status */
+    .nunca-acessou {
+      background-color: #f8d7da;
+      color: #842029;
+    }
+
+    .acesso-antigo {
+      background-color: #fff3cd;
+      color: #997404;
+    }
+
+    .status-badge {
+      font-size: 0.8em;
+      padding: 0.25rem 0.5rem;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container py-5">
+
+    <!-- Cabeçalho -->
+    <div class="row mb-4 align-items-center no-print">
+      <div class="col">
+        <h1 class="h2 mb-0">
+          <i class="bi bi-mortarboard me-2"></i>Relatório C10 - Último Login Bolsistas
+        </h1>
+        <div class="small text-muted">Monitoramento de atividade no Moodle</div>
+      </div>
+      <div class="col-auto d-flex gap-2">
+        <button onclick="history.back()" class="btn btn-outline-secondary">
+          <i class="bi bi-arrow-left-circle"></i> Voltar
+        </button>
+        <button onclick="window.print()" class="btn btn-outline-primary">
+          <i class="bi bi-printer"></i> Imprimir
+        </button>
+        <button onclick="carregarRelatorio()" class="btn btn-outline-success">
+          <i class="bi bi-arrow-clockwise"></i> Atualizar
+        </button>
+      </div>
+    </div>
+
+    <!-- Última atualização -->
+    <div class="mb-3 no-print">
+      <span class="badge bg-info">
+        <i class="bi bi-clock"></i>
+        Última atualização: <span id="ultima-atualizacao">-</span>
+      </span>
+    </div>
+
+    <!-- Alertas -->
+    <div id="mensagem"></div>
+
+    <!-- Loading -->
+    <div id="loading" class="text-center py-4 d-none">
+      <div class="spinner-border text-primary" role="status"></div>
+      <p class="mt-2">Consultando Moodle UEMA (costuma levar mais de 1 minuto)...</p>
+    </div>
+
+    <!-- Conteúdo -->
+    <div id="conteudo-relatorio"></div>
+
+    <!-- Resumo estatístico -->
+    <div id="resumo-stats" class="mt-4 d-none">
+      <div class="row g-3">
+        <div class="col-md-3">
+          <div class="card text-center">
+            <div class="card-body">
+              <h5 class="card-title text-success" id="total-usuarios">0</h5>
+              <p class="card-text">Total de Usuários</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card text-center">
+            <div class="card-body">
+              <h5 class="card-title text-warning" id="nunca-acessaram">0</h5>
+              <p class="card-text">Nunca Acessaram</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card text-center">
+            <div class="card-body">
+              <h5 class="card-title text-danger" id="acesso-antigo">0</h5>
+              <p class="card-text">Acesso > 30 dias</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card text-center">
+            <div class="card-body">
+              <h5 class="card-title text-info" id="total-cursos">0</h5>
+              <p class="card-text">Tipos de Papel</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    const mesesPtBr = {
+      "jan.": "01", "fev.": "02", "mar.": "03", "abr.": "04", "mai.": "05", "jun.": "06",
+      "jul.": "07", "ago.": "08", "set.": "09", "out.": "10", "nov.": "11", "dez.": "12",
+    };
+
+    function parsePtBrDate(dateString) {
+      if (!dateString || dateString === "Nunca") return null;
+      const parts = dateString.split(", ");
+      if (parts.length < 3) return null;
+      const dayMonthYear = parts[1].split(" ");
+      const time = parts[2];
+      const day = dayMonthYear[0].padStart(2, "0");
+      const month = mesesPtBr[dayMonthYear[1]];
+      const year = dayMonthYear[2];
+      return new Date(`${year}-${month}-${day}T${time}`);
+    }
+
+    async function carregarRelatorio() {
+      const loading = document.getElementById("loading");
+      const mensagem = document.getElementById("mensagem");
+      const conteudo = document.getElementById("conteudo-relatorio");
+      const resumo = document.getElementById("resumo-stats");
+
+      mensagem.innerHTML = "";
+      conteudo.innerHTML = "";
+      resumo.classList.add("d-none");
+      loading.classList.remove("d-none");
+
+      try {
+        const resp = await fetch("https://www.cead.ufjf.br/sistemascead-c10/c10.php", { method: "GET" });
+        if (!resp.ok) throw new Error(`Erro ${resp.status}: ${resp.statusText}`);
+
+        const dados = await resp.json();
+        loading.classList.add("d-none");
+
+        if (!dados || !dados.length) {
+          conteudo.innerHTML = `<div class="alert alert-info"><i class="bi bi-info-circle"></i> Nenhum dado disponível no momento.</div>`;
+          return;
+        }
+
+        renderizarRelatorio(dados);
+        calcularEstatisticas(dados);
+        document.getElementById("ultima-atualizacao").textContent = new Date().toLocaleString("pt-BR");
+
+      } catch (erro) {
+        loading.classList.add("d-none");
+        mensagem.innerHTML = `<div class="alert alert-danger"><i class="bi bi-exclamation-circle"></i> Erro ao carregar relatório: ${erro.message}</div>`;
+      }
+    }
+
+    function renderizarRelatorio(usuarios) {
+      const container = document.getElementById("conteudo-relatorio");
+      const usuariosValidos = usuarios.filter(u => !u.erro);
+
+      if (!usuariosValidos.length) {
+        container.innerHTML = `<div class="alert alert-warning"><i class="bi bi-exclamation-triangle"></i> Nenhum usuário válido encontrado.</div>`;
+        return;
+      }
+
+      usuariosValidos.sort((a, b) => a.nome.localeCompare(b.nome));
+
+      const tabela = document.createElement("table");
+      tabela.className = "table table-sm table-bordered table-striped mb-4";
+      tabela.innerHTML = `
+        <thead class="table-dark">
+          <tr>
+            <th><i class="bi bi-person"></i> Nome</th>
+            <th><i class="bi bi-shield"></i> Papel</th>
+            <th><i class="bi bi-clock-history"></i> Último Acesso</th>
+            <th><i class="bi bi-activity"></i> Status</th>
+          </tr>
+        </thead>
+      `;
+
+      const tbody = document.createElement("tbody");
+
+      usuariosValidos.forEach(usuario => {
+        const statusInfo = getStatusInfo(usuario.ultimo_acesso);
+        const tr = document.createElement("tr");
+        tr.className = statusInfo.classe;
+        tr.innerHTML = `
+          <td><strong>${usuario.nome}</strong></td>
+          <td><span class="badge bg-secondary">${usuario.papel}</span></td>
+          <td>${formatarDataAcesso(usuario.ultimo_acesso)}</td>
+          <td><span class="badge ${statusInfo.badgeClass} status-badge"><i class="${statusInfo.icone}"></i> ${statusInfo.texto}</span></td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      tabela.appendChild(tbody);
+      container.appendChild(tabela);
+    }
+
+    function getStatusInfo(ultimoAcesso) {
+      if (!ultimoAcesso || ultimoAcesso === "Nunca") {
+        return { classe: "nunca-acessou", badgeClass: "bg-danger", icone: "bi bi-x-circle", texto: "Nunca acessou" };
+      }
+      const dataAcesso = parsePtBrDate(ultimoAcesso);
+      if (!dataAcesso) {
+        return { classe: "", badgeClass: "bg-secondary", icone: "bi bi-question-circle", texto: "Data inválida" };
+      }
+      const dias = Math.floor((new Date() - dataAcesso) / (1000 * 60 * 60 * 24));
+      if (dias > 30) {
+        return { classe: "acesso-antigo", badgeClass: "bg-warning", icone: "bi bi-exclamation-triangle", texto: `${dias} dias atrás` };
+      }
+      return { classe: "", badgeClass: "bg-success", icone: "bi bi-check-circle", texto: "Ativo" };
+    }
+
+    function formatarDataAcesso(ultimoAcesso) {
+      return (!ultimoAcesso || ultimoAcesso === "Nunca") ? '<em class="text-muted">Nunca</em>' : ultimoAcesso;
+    }
+
+    function calcularEstatisticas(dados) {
+      const usuariosValidos = dados.filter(item => !item.erro);
+      const stats = { total: usuariosValidos.length, nuncaAcessaram: 0, acessoAntigo: 0, papeis: new Set() };
+
+      usuariosValidos.forEach(item => {
+        item.papel.split(", ").forEach(p => stats.papeis.add(p));
+        const statusInfo = getStatusInfo(item.ultimo_acesso);
+        if (statusInfo.texto === "Nunca acessou") stats.nuncaAcessaram++;
+        else if (statusInfo.badgeClass === "bg-warning") stats.acessoAntigo++;
+      });
+
+      document.getElementById("total-usuarios").textContent = stats.total;
+      document.getElementById("nunca-acessaram").textContent = stats.nuncaAcessaram;
+      document.getElementById("acesso-antigo").textContent = stats.acessoAntigo;
+      document.getElementById("total-cursos").textContent = stats.papeis.size;
+      document.getElementById("resumo-stats").classList.remove("d-none");
+    }
+
+    document.addEventListener("DOMContentLoaded", carregarRelatorio);
+  </script>
+</body>
+
+</html>

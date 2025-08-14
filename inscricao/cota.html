@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Escolha de Cota</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="../extra/css/principal.css" />
+    <link rel="stylesheet" href="../extra/css/logo-bg.css" />
+</head>
+
+<body class="bg-light py-3">
+    <div class="container position-relative" style="min-height: 600px">
+        <img src="../extra/img/logo.png" alt="Logo" class="logo-fundo" />
+
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card p-4 shadow-sm">
+                    <h1 class="mb-4 text-center">Escolha de Cota</h1>
+
+                    <div id="alerta-inscricao" class="alert alert-warning d-none" role="alert"></div>
+                    <div id="status-message" class="mt-2" role="status" aria-live="polite"></div>
+
+                    <div id="bloco-escolha">
+                        <label for="cota" class="form-label">Selecione a cota</label>
+                        <select id="cota" class="form-select" disabled>
+                            <option selected disabled>Carregando cotas…</option>
+                        </select>
+
+                        <button id="confirmar-cota" class="btn btn-primary w-100 mt-3" disabled>
+                            <i class="bi bi-check2-circle me-2"></i> Confirmar cota
+                        </button>
+                    </div>
+
+                    <div id="bloco-marcada" class="card p-3 mt-3 d-none">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>Cota selecionada:</strong> <span id="cota-marcada-nome" class="ms-1"></span>
+                            </div>
+                            <button id="remover-cota" class="btn btn-outline-danger btn-sm">
+                                <i class="bi bi-trash"></i> Remover
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 mt-4">
+                        <button id="proximo-passo" class="btn btn-success" disabled>
+                            <i class="bi bi-arrow-right-circle me-2"></i> Próximo passo
+                        </button>
+                        <button id="voltar-index" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left-circle me-2"></i> Voltar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../extra/js/inscricao/cota.js"></script>
+</body>
+
+</html>

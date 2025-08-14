@@ -1,0 +1,20 @@
+.card-publico {
+    border-radius: 0.75rem;
+}
+
+/* Acessibilidade para textos apenas-visuais */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    border: 0;
+}
+
+.help {
+    color: #6c757d;
+    font-size: 0.875rem;
+}

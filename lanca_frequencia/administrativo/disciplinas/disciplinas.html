@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Administrativo - Disciplinas</title>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" />
+  <link rel="stylesheet" href="../../../extra/css/principal.css" />
+</head>
+
+<body>
+  <div class="container py-5">
+
+    <!-- Cabeçalho -->
+    <div class="row mb-4 align-items-center">
+      <div class="col">
+        <h1 class="h2 mb-0">
+          <i class="bi bi-journal-text me-2"></i>Administrativo - Disciplinas
+        </h1>
+      </div>
+      <div class="col-auto d-flex gap-2">
+        <a href="selecao.html" class="btn btn-outline-secondary">
+          <i class="bi bi-arrow-left"></i> Voltar
+        </a>
+        <button class="btn btn-outline-danger" onclick="logout()">
+          <i class="bi bi-box-arrow-right"></i> Sair
+        </button>
+      </div>
+    </div>
+
+    <!-- Alertas -->
+    <div id="error-message" class="alert alert-danger d-none" role="alert">
+      <span id="error-text"></span>
+      <button type="button" class="btn-close float-end" aria-label="Fechar" onclick="dismissError()"></button>
+    </div>
+
+    <!-- Formulário -->
+    <div class="card mb-4" id="form-container">
+      <div class="card-header bg-success text-white" id="form-header">
+        <i class="bi bi-plus-circle"></i>
+        <span id="form-title">Nova Disciplina</span>
+      </div>
+      <div class="card-body">
+        <form id="disciplina-form">
+          <input type="hidden" id="disciplina-id" />
+          <input type="hidden" id="curso-id" />
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label for="nome" class="form-label">Nome da Disciplina</label>
+              <input type="text" id="nome" class="form-control" required />
+            </div>
+            <div class="col-md-2">
+              <label for="codigo" class="form-label">Código</label>
+              <input type="text" id="codigo" class="form-control" />
+            </div>
+            <div class="col-md-2">
+              <label for="periodo" class="form-label">Período</label>
+              <input type="number" id="periodo" class="form-control" min="1" max="12" required />
+            </div>
+            <div class="col-md-2">
+              <label for="carga_horaria" class="form-label">Carga Horária</label>
+              <input type="number" id="carga_horaria" class="form-control" min="1" max="180" />
+            </div>
+            <div class="col-md-6">
+              <label for="ativa" class="form-label">Ativa?</label>
+              <select id="ativa" class="form-select" required>
+                <option value="true">Sim</option>
+                <option value="false">Não</option>
+              </select>
+            </div>
+            <div class="col-12 text-end mt-3">
+              <button type="button" class="btn btn-outline-secondary me-2 d-none" id="cancel-button"
+                onclick="cancelarEdicao()">
+                <i class="bi bi-x-circle"></i> Cancelar
+              </button>
+              <button type="submit" class="btn btn-danger">
+                <i class="bi bi-save"></i>
+                <span id="submit-text">Salvar</span>
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Lista -->
+    <div class="mb-3">
+      <h2 class="h4 mb-2">
+        <i class="bi bi-list-ul me-2"></i> Disciplinas Cadastradas
+      </h2>
+    </div>
+    <div class="table-responsive shadow-sm">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Nome</th>
+            <th class="text-center">Código</th>
+            <th class="text-center">Período</th>
+            <th class="text-center">Carga Horária</th>
+            <th class="text-center">Ativa?</th>
+            <th class="text-center">Ações</th>
+          </tr>
+        </thead>
+        <tbody id="lista-disciplinas">
+          <tr>
+            <td colspan="6" class="text-center py-4 text-muted">Carregando...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+  <!-- Scripts -->
+  <script src="../../../extra/js/logout.js"></script>
+  <script src="../../../extra/js/fetchComToken.js"></script>
+  <script src="../../../extra/js/refreshAccessToken.js"></script>
+  <script>
+    let disciplinas = [];
+    let idCurso = null;
+
+    document.addEventListener("DOMContentLoaded", () => {
+      idCurso = new URLSearchParams(window.location.search).get("curso");
+      if (!idCurso) {
+        showError("ID do curso não informado.", false, "warning");
+        return;
+      }
+      document.getElementById("curso-id").value = idCurso;
+      carregarDisciplinas();
+    });
+
+    function showError(msg, success = false, type = null) {
+      const errorDiv = document.getElementById("error-message");
+      const errorText = document.getElementById("error-text");
+      errorDiv.className = `alert alert-${type || (success ? "success" : "danger")} alert-dismissible`;
+      errorText.textContent = msg;
+      errorDiv.classList.remove("d-none");
+      if (success) setTimeout(dismissError, 4000);
+    }
+
+    function dismissError() {
+      document.getElementById("error-message").classList.add("d-none");
+    }
+
+    async function carregarDisciplinas() {
+      const tabela = document.getElementById("lista-disciplinas");
+      try {
+        const resp = await fetchComToken(`/backend/lanca_frequencia/curso/${idCurso}/disciplinas/`);
+        if (!resp.ok) throw new Error("Erro ao buscar disciplinas");
+        disciplinas = await resp.json();
+        atualizarTabela();
+      } catch (error) {
+        tabela.innerHTML = `<tr><td colspan="6" class="text-center text-danger">${error.message}</td></tr>`;
+      }
+    }
+
+    function atualizarTabela() {
+      const tabela = document.getElementById("lista-disciplinas");
+      tabela.innerHTML = "";
+      if (disciplinas.length === 0) {
+        tabela.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-4">Nenhuma disciplina cadastrada.</td></tr>`;
+        return;
+      }
+      disciplinas.forEach((disciplina) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${disciplina.nome}</td>
+          <td class="text-center">${disciplina.codigo || "-"}</td>
+          <td class="text-center">${disciplina.periodo}</td>
+          <td class="text-center">${disciplina.carga_horaria || "-"}</td>
+          <td class="text-center">${disciplina.ativa ? "Sim" : "Não"}</td>
+          <td class="text-center">
+            <button class="btn btn-sm btn-outline-primary" onclick="editarDisciplina(${disciplina.id})">
+              <i class="bi bi-pencil-square"></i> Editar
+            </button>
+          </td>
+        `;
+        tabela.appendChild(tr);
+      });
+    }
+
+    document.getElementById("disciplina-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const id = document.getElementById("disciplina-id").value;
+      const data = {
+        nome: document.getElementById("nome").value,
+        codigo: document.getElementById("codigo").value || null,
+        periodo: parseInt(document.getElementById("periodo").value),
+        carga_horaria: document.getElementById("carga_horaria").value ? parseInt(document.getElementById("carga_horaria").value) : null,
+        ativa: document.getElementById("ativa").value === "true",
+      };
+
+      try {
+        let resp;
+        if (id) {
+          resp = await fetchComToken(`/backend/lanca_frequencia/disciplina/${id}/`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data),
+          });
+        } else {
+          resp = await fetchComToken(`/backend/lanca_frequencia/curso/${idCurso}/disciplinas/`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data),
+          });
+        }
+        if (!resp.ok) throw new Error("Erro ao salvar a disciplina.");
+
+        showError("Disciplina salva com sucesso!", true);
+        document.getElementById("disciplina-form").reset();
+        document.getElementById("disciplina-id").value = "";
+        document.getElementById("cancel-button").classList.add("d-none");
+
+        // remove estilos de edição
+        document.getElementById("form-container").classList.remove("border", "border-success", "shadow-sm");
+        document.getElementById("form-header").classList.remove("bg-warning", "text-dark");
+        document.getElementById("form-header").classList.add("bg-success", "text-white");
+        document.getElementById("form-title").textContent = "Nova Disciplina";
+        document.getElementById("submit-text").textContent = "Salvar";
+
+        carregarDisciplinas();
+      } catch (error) {
+        showError(error.message);
+      }
+    });
+
+    function editarDisciplina(id) {
+      const d = disciplinas.find((x) => x.id === id);
+      if (!d) return;
+
+      if (confirm("Atenção: editar o nome da disciplina pode mudar o histórico de lançamento associado. Deseja continuar?")) {
+        document.getElementById("disciplina-id").value = d.id;
+        document.getElementById("nome").value = d.nome;
+        document.getElementById("codigo").value = d.codigo || "";
+        document.getElementById("periodo").value = d.periodo;
+        document.getElementById("carga_horaria").value = d.carga_horaria || "";
+        document.getElementById("ativa").value = d.ativa ? "true" : "false";
+
+        // mostra botão cancelar e aplica "modo edição" só com classes Bootstrap
+        document.getElementById("cancel-button").classList.remove("d-none");
+        document.getElementById("form-container").classList.add("border", "border-success", "shadow-sm");
+        const header = document.getElementById("form-header");
+        header.classList.remove("bg-success", "text-white");
+        header.classList.add("bg-warning", "text-dark");
+        document.getElementById("form-title").textContent = "Editar Disciplina";
+        document.getElementById("submit-text").textContent = "Atualizar";
+
+        document.getElementById("form-container").scrollIntoView({ behavior: "smooth", block: "center" });
+        setTimeout(() => document.getElementById("nome").focus(), 300);
+      }
+    }
+
+    function cancelarEdicao() {
+      document.getElementById("disciplina-form").reset();
+      document.getElementById("disciplina-id").value = "";
+      document.getElementById("cancel-button").classList.add("d-none");
+
+      document.getElementById("form-container").classList.remove("border", "border-success", "shadow-sm");
+      const header = document.getElementById("form-header");
+      header.classList.remove("bg-warning", "text-dark");
+      header.classList.add("bg-success", "text-white");
+      document.getElementById("form-title").textContent = "Nova Disciplina";
+      document.getElementById("submit-text").textContent = "Salvar";
+    }
+  </script>
+</body>
+
+</html>
