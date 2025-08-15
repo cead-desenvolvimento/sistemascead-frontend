@@ -224,10 +224,14 @@
       }
 
       if (data.banco) {
-        document.getElementById("codigo_banco").value = data.banco.codigo_banco || "";
-        document.getElementById("agencia").value = data.banco.agencia || "";
-        document.getElementById("conta").value = data.banco.conta || "";
-        document.getElementById("digito").value = data.banco.digito_verificador_conta || "";
+        document.getElementById("codigo_banco").value =
+          data.banco.codigo_banco != null ? data.banco.codigo_banco : "";
+        document.getElementById("agencia").value =
+          data.banco.agencia != null ? data.banco.agencia : "";
+        document.getElementById("conta").value =
+          data.banco.conta != null ? data.banco.conta : "";
+        document.getElementById("digito").value =
+          data.banco.digito_verificador_conta != null ? data.banco.digito_verificador_conta : "";
 
         if (data.banco.codigo_banco) {
           buscarNomeBanco(data.banco.codigo_banco);
@@ -301,7 +305,7 @@
           codigo_banco: document.getElementById("codigo_banco").value,
           agencia: document.getElementById("agencia").value.replace(/\D/g, ""),
           conta: document.getElementById("conta").value.replace(/\D/g, ""),
-          digito_verificador_conta: document.getElementById("digito").value,
+          digito_verificador_conta: document.getElementById("digito").value.replace(/\D/g, ""),
         },
       };
 
