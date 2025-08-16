@@ -57,7 +57,7 @@
             </div>
             <div class="col-md-4">
               <label for="oferta" class="form-label">Oferta</label>
-              <select id="oferta" class="form-select" required></select>
+              <select id="oferta" class="form-select"></select>
             </div>
             <div class="col-12 text-end mt-3">
               <button type="button" class="btn btn-outline-secondary me-2 d-none" id="cancel-button"
@@ -157,7 +157,7 @@
 
         populateSelect(document.getElementById("edital"), editais, "descricao", "Selecione um Edital");
         populateSelect(document.getElementById("funcao"), funcoes, "funcao", "Selecione uma Função");
-        populateSelect(document.getElementById("oferta"), ofertas, "oferta", "Selecione uma Oferta");
+        populateSelect(document.getElementById("oferta"), ofertas, "oferta", "— Sem oferta —");
 
         if (hasWarning) {
           showError("Alguns dados podem não estar disponíveis no momento.", false, "warning");
@@ -209,11 +209,11 @@
           row.dataset.id = a.id;
           row.dataset.edital = a.ed_edital;
           row.dataset.funcao = a.fi_funcao_bolsista;
-          row.dataset.oferta = a.ac_curso_oferta;
+          row.dataset.oferta = (a.ac_curso_oferta ?? "");
           row.innerHTML = `
             <td class="text-center">${a.edital}</td>
             <td class="text-center">${a.funcao}</td>
-            <td class="text-center">${a.oferta}</td>
+            <td class="text-center">${a.oferta ?? "—"}</td>
             <td class="text-center">
               <button class="btn btn-sm btn-outline-primary me-2" onclick="editarAssociacaoFromRow(this)">
                 <i class="bi bi-pencil-square"></i> Editar
@@ -243,29 +243,75 @@
       const funcaoSelect = document.getElementById("funcao");
       const ofertaSelect = document.getElementById("oferta");
 
-      editalSelect.setAttribute("data-expected-value", editalId);
-      funcaoSelect.setAttribute("data-expected-value", funcaoId);
-      ofertaSelect.setAttribute("data-expected-value", ofertaId);
+      // normaliza valor vindo da lista (null, "null", undefined, "")
+      const toOptionValue = (v) => {
+        if (v === null || v === undefined) return "";
+        const s = String(v).trim();
+        return (s === "" || s === "null" || s === "undefined") ? "" : s;
+      };
 
-      editalSelect.value = editalId;
-      funcaoSelect.value = funcaoId;
-      ofertaSelect.value = ofertaId;
+      // seta o select; se a opção ainda não existe, guarda em data-expected-value
+      const setSelectValue = (select, value) => {
+        if (!select) return;
+        const clean = toOptionValue(value);
 
-      // modo edição (somente classes Bootstrap)
-      document.getElementById("form-container").classList.add("border", "border-success", "shadow-sm");
-      const header = document.getElementById("form-header");
-      header.classList.remove("bg-success", "text-white");
-      header.classList.add("bg-warning", "text-dark");
+        // limpa estado anterior
+        select.classList.remove("is-invalid");
+        const fb = select?.nextElementSibling;
+        if (fb && fb.classList?.contains("invalid-feedback")) fb.textContent = "";
 
-      document.getElementById("form-title").textContent = "Editar Associação";
-      document.getElementById("submit-text").textContent = "Atualizar";
-      document.getElementById("cancel-button").classList.remove("d-none");
-      document.getElementById("associacao-id").value = id;
+        // remove expected antigo
+        select.removeAttribute("data-expected-value");
 
-      verificarCamposIncompletos();
+        if (clean === "") { // valor nulo/ausente
+          select.value = "";
+          return;
+        }
 
-      document.getElementById("form-container").scrollIntoView({ behavior: "smooth", block: "center" });
-      setTimeout(() => document.getElementById("edital").focus(), 300);
+        const hasOption = Array.from(select.options).some((opt) => opt.value === clean);
+        if (hasOption) {
+          select.value = clean;
+        } else {
+          // ainda não carregou as options -> marca para preencher depois
+          select.setAttribute("data-expected-value", clean);
+          select.value = ""; // evita ficar com valor inválido selecionado
+        }
+      };
+
+      // aplica valores
+      setSelectValue(editalSelect, editalId);
+      setSelectValue(funcaoSelect, funcaoId);
+      setSelectValue(ofertaSelect, ofertaId); // pode ser "" (null) e tá tudo certo
+
+      // ---- UI de modo edição ----
+      // título
+      const titleEl = document.getElementById("form-title");
+      if (titleEl) titleEl.textContent = "Editar associação";
+
+      // header (muda cor para aviso)
+      const headerEl = document.getElementById("form-header");
+      if (headerEl) {
+        headerEl.classList.remove("bg-success", "text-white");
+        headerEl.classList.add("bg-warning", "text-dark");
+      }
+
+      // botão salvar -> "Atualizar"
+      const submitText = document.getElementById("submit-text");
+      if (submitText) submitText.textContent = "Atualizar";
+
+      // mostra botão "Cancelar"
+      const cancelBtn = document.getElementById("cancel-button");
+      if (cancelBtn) cancelBtn.classList.remove("d-none");
+
+      // tenta resolver imediatamente os expected se as options já estiverem presentes
+      [editalSelect, funcaoSelect, ofertaSelect].forEach((sel) => {
+        if (!sel) return;
+        const expected = sel.getAttribute("data-expected-value");
+        if (expected && Array.from(sel.options).some((o) => o.value === expected)) {
+          sel.value = expected;
+          sel.removeAttribute("data-expected-value");
+        }
+      });
     }
 
     async function excluirAssociacao(button) {
@@ -312,15 +358,25 @@
       dismissError();
     }
 
+    function toIntOrNull(v) {
+      if (v === undefined || v === null) return null;
+      const s = String(v).trim();
+      return s === "" ? null : parseInt(s, 10);
+    }
+
     async function salvarAssociacao(event) {
       event.preventDefault();
 
+      const editalVal = document.getElementById("edital").value;
+      const funcaoVal = document.getElementById("funcao").value;
+      const ofertaVal = document.getElementById("oferta").value;
+
       const dados = {
-        ed_edital: parseInt(document.getElementById("edital").value),
-        fi_funcao_bolsista: parseInt(document.getElementById("funcao").value),
-        ac_curso_oferta: parseInt(document.getElementById("oferta").value),
+        ed_edital: toIntOrNull(editalVal),
+        fi_funcao_bolsista: toIntOrNull(funcaoVal),
+        ac_curso_oferta: toIntOrNull(ofertaVal),
       };
-      if (editMode) dados.id = parseInt(currentId);
+      if (editMode) dados.id = toIntOrNull(currentId);
 
       const url = "/backend/financeiro/associar_edital_funcao_oferta/";
       const method = editMode ? "PUT" : "POST";
@@ -343,7 +399,10 @@
 
         if (!resp.ok) {
           const result = await resp.json().catch(() => ({}));
-          const errorMsg = result.non_field_errors?.join(", ") || `Erro ao ${editMode ? "atualizar" : "criar"} associação`;
+          const errorMsg =
+            result.detail ||
+            result.non_field_errors?.join(", ") ||
+            `Erro ao ${editMode ? "atualizar" : "criar"} associação`;
           throw new Error(errorMsg);
         }
 

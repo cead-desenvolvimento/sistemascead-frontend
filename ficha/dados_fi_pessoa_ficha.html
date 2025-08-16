@@ -50,11 +50,11 @@
           <div class="form-control-plaintext border-bottom pb-2" id="edital-texto"></div>
         </div>
         <div class="col-md-6">
-          <label class="form-label fw-bold">Função Bolsista:</label>
+          <label class="form-label fw-bold">Função:</label>
           <div class="form-control-plaintext border-bottom pb-2" id="funcao-bolsista-texto"></div>
         </div>
         <div class="col-md-6">
-          <label class="form-label fw-bold">Curso Oferta:</label>
+          <label class="form-label fw-bold">Oferta:</label>
           <div class="form-control-plaintext border-bottom pb-2" id="curso-oferta-texto"></div>
         </div>
       </div>
@@ -219,7 +219,7 @@
 
     // máscaras
     document.addEventListener("DOMContentLoaded", () => {
-      $("#numero_documento").mask("0000000000");
+      $("#numero_documento").mask("0000000000000");
 
       carregarDados();
 
@@ -366,12 +366,15 @@
       limparErros();
       if (!validarFormulario()) return;
 
-      const funcaoBolsistaId = window.dadosCarregados?.fi_funcao_bolsista?.id;
-      const cursoOfertaId = window.dadosCarregados?.ac_curso_oferta?.id;
-      const idMun = document.getElementById("cm_municipio_id").value || window.dadosCarregados?.fi_ficha?.cm_municipio?.id;
+      const funcaoBolsistaId = window.dadosCarregados?.fi_funcao_bolsista?.id ?? null;
+      const cursoOfertaId = window.dadosCarregados?.ac_curso_oferta?.id ?? null;
+      const idMun =
+        document.getElementById("cm_municipio_id").value ||
+        window.dadosCarregados?.fi_ficha?.cm_municipio?.id ||
+        null;
 
-      if (!funcaoBolsistaId || !cursoOfertaId) {
-        mostrarErro("Dados de função bolsista ou curso oferta não encontrados.");
+      if (!funcaoBolsistaId) {
+        mostrarErro("Dados de função bolsista não encontrados.");
         return;
       }
       if (!chkEstrangeiro.checked && !idMun) {
@@ -395,9 +398,9 @@
         nome_mae: document.getElementById("nome_mae").value,
         ultimo_curso_titulacao: document.getElementById("ultimo_curso_titulacao").value,
         instituicao_titulacao: document.getElementById("instituicao_titulacao").value,
-        cm_municipio: chkEstrangeiro.checked ? null : parseInt(idMun),
-        fi_funcao_bolsista: funcaoBolsistaId,
-        ac_curso_oferta: cursoOfertaId,
+        cm_municipio: chkEstrangeiro.checked ? null : (idMun ? parseInt(idMun, 10) : null),
+        fi_funcao_bolsista: parseInt(funcaoBolsistaId, 10),
+        ac_curso_oferta: cursoOfertaId !== null ? parseInt(cursoOfertaId, 10) : null,
       };
 
       fetch("/backend/ficha/dados_fi_pessoa_ficha/", {
@@ -430,7 +433,7 @@
           }
           return data;
         })
-        .then(() => window.location.href = "gera_ficha.html")
+        .then(() => (window.location.href = "gera_ficha.html"))
         .catch((err) => mostrarErro(err.message));
     }
 
