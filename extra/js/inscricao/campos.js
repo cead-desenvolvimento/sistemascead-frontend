@@ -222,11 +222,13 @@ document.addEventListener("DOMContentLoaded", function () {
 
                 // preenche dateboxes (pode ter múltiplos períodos)
                 (data.dateboxes || []).forEach((campo) => {
-                    adicionarPeriodo(
-                        campo.ed_vaga_campo_datebox_id,
-                        campo.inicio,
-                        campo.fim
-                    );
+                    (campo.periodos || []).forEach((periodo) => {
+                        adicionarPeriodo(
+                            campo.ed_vaga_campo_datebox_id,
+                            periodo.inicio,
+                            periodo.fim
+                        );
+                    });
                 });
             })
             .catch(() =>
@@ -355,8 +357,9 @@ document.addEventListener("DOMContentLoaded", function () {
                 }
                 periods.push({ inicio: ini, fim: fim });
             }
-            // compat: envia objeto quando só há 1 período; array quando >1
-            dateboxPayload[id] = periods.length === 1 ? periods[0] : periods;
+            if (periods.length > 0) {
+                dateboxPayload[id] = periods;
+            }
         }
 
         const payload = {
