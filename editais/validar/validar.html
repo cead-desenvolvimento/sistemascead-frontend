@@ -245,7 +245,7 @@
         for (const inscrito of inscritos) {
           // documentos do inscrito
           const docsHTML = (inscrito.uploads || []).map((doc) => {
-            const tipo = doc.fields.tipo;               // ex: 'checkbox', 'combobox', 'datebox'
+            const tipo = doc.fields.tipo; // ex: 'checkbox', 'combobox', 'datebox'
             const id = doc.pk;
             const fullId = `${tipo}-${id}`;
             const checked = doc.fields?.validado ? "checked" : "";
@@ -253,9 +253,8 @@
             const showPontuacao = pMax > 0;
             const pAtual = doc.fields.pontuacao_obtida ?? "";
 
-            // link do arquivo (se houver) ou descrição com datas
-            let label = doc.fields.descricao || "-";
-            if (pMax > 0) label += ` (${pMax} pontos)`;
+            let label = (doc.fields.descricao || "-").trim();
+            label = label.replace(/\n/g, "<br />");
 
             let campoArquivo = "";
             if (doc.fields.caminho_arquivo) {
@@ -265,7 +264,7 @@
               if (doc.fields.inicio && doc.fields.fim) {
                 periodo = ` (${doc.fields.inicio} até ${doc.fields.fim})`;
               }
-              campoArquivo = label + periodo;
+              campoArquivo = (label + periodo).replace(/\n/g, "<br />");
             }
 
             return `
