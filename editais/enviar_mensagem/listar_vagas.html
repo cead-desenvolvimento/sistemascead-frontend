@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="pt-br">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Envio de mensagem — Vagas do Edital</title>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" />
+  <link rel="stylesheet" href="../../extra/css/principal.css" />
+</head>
+
+<body>
+  <div class="container py-5">
+
+    <!-- Cabeçalho -->
+    <div class="row mb-4 align-items-center">
+      <div class="col">
+        <h1 class="h2 mb-1" id="titulo-edital">
+          <i class="bi bi-briefcase me-2"></i>Vagas do Edital
+        </h1>
+        <div class="text-muted" id="subtitulo-edital"></div>
+      </div>
+      <div class="col-auto d-flex gap-2">
+        <a href="listar_editais.html" class="btn btn-outline-secondary">
+          <i class="bi bi-arrow-left me-1"></i> Voltar
+        </a>
+        <button class="btn btn-outline-danger" onclick="logout()">
+          <i class="bi bi-box-arrow-right me-1"></i> Sair
+        </button>
+      </div>
+    </div>
+
+    <!-- Alert -->
+    <div id="status" class="alert d-none" role="alert"></div>
+
+    <!-- Tabela -->
+    <div class="table-responsive shadow-sm">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>Descrição</th>
+            <th class="text-center">Nº de Vagas</th>
+            <th class="text-end">Ações</th>
+          </tr>
+        </thead>
+        <tbody id="vagas-list">
+          <tr>
+            <td colspan="3" class="text-center py-4 text-muted">Carregando vagas...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+  <!-- Scripts -->
+  <script src="../../extra/js/logout.js"></script>
+  <script src="../../extra/js/fetchComToken.js"></script>
+  <script src="../../extra/js/refreshAccessToken.js"></script>
+  <script>
+    function showStatus(msg, type = "danger") {
+      const el = document.getElementById("status");
+      el.className = `alert alert-${type}`;
+      el.textContent = msg;
+      el.classList.remove("d-none");
+    }
+    function clearStatus() {
+      const el = document.getElementById("status");
+      el.className = "alert d-none";
+      el.textContent = "";
+    }
+
+    function setSubtitulo(ano, numero) {
+      const el = document.getElementById("subtitulo-edital");
+      if (ano && numero) el.textContent = `Edital ${numero}/${ano}`;
+      else el.textContent = "";
+    }
+
+    async function carregarVagas() {
+      const params = new URLSearchParams(window.location.search);
+      const ano = params.get("ano");
+      const numero = params.get("numero");
+      const tbody = document.getElementById("vagas-list");
+
+      if (!ano || !numero) {
+        showStatus("Parâmetros inválidos na URL (informe 'ano' e 'numero').");
+        return;
+      }
+
+      document.getElementById("titulo-edital").innerHTML =
+        `<i class="bi bi-briefcase me-2"></i>Vagas do Edital`;
+      setSubtitulo(ano, numero);
+
+      clearStatus();
+      tbody.innerHTML = `<tr><td colspan="3" class="text-center py-4 text-muted">Carregando vagas...</td></tr>`;
+
+      const url = `/backend/editais/enviar_mensagem/${encodeURIComponent(ano)}/${encodeURIComponent(numero)}/`;
+
+      try {
+        let resp = await fetchComToken(url, { method: "GET", credentials: "include" });
+
+        if (resp.status === 401) {
+          await refreshAccessToken();
+          resp = await fetchComToken(url, { method: "GET", credentials: "include" });
+        }
+
+        if (!resp.ok) {
+          const err = await resp.json().catch(() => ({}));
+          throw new Error(err.detail || "Erro ao buscar vagas.");
+        }
+
+        const vagas = await resp.json();
+        tbody.innerHTML = "";
+
+        if (!Array.isArray(vagas) || vagas.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="3" class="text-center py-4 text-muted">Nenhuma vaga disponível.</td></tr>`;
+          return;
+        }
+
+        vagas.forEach((vaga) => {
+          const qtd = (vaga.quantidade ?? vaga.qtd ?? null);
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${vaga.descricao ?? "-"}</td>
+            <td class="text-center">${qtd !== null ? qtd : "-"}</td>
+            <td class="text-end">
+              <a href="enviar_mensagem.html?vaga=${encodeURIComponent(vaga.id)}" class="btn btn-danger btn-sm">
+                <i class="bi bi-send me-1"></i> Enviar mensagem
+              </a>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+      } catch (error) {
+        showStatus(error.message || "Falha ao carregar vagas.");
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      const token = localStorage.getItem("token");
+      if (!token) return logout();
+      await carregarVagas();
+    });
+  </script>
+</body>
+
+</html>

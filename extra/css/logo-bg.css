@@ -1,0 +1,25 @@
+body {
+    background-color: #f8f9fa;
+    min-height: 100vh;
+}
+
+.logo-fundo {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 350px;
+    height: 350px;
+    opacity: 1; /* Não esmaece fora do card */
+    z-index: 0;
+    pointer-events: none;
+}
+
+.card {
+    position: relative;
+    z-index: 1;
+    margin-top: 3rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    border: none;
+    border-radius: 15px;
+    background: rgba(255, 255, 255, 0.92); /* Levemente translúcido */
+}

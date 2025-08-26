@@ -1,0 +1,45 @@
+/* Específico da página de acessos — mantém sua identidade do principal.css */
+
+.card-uri {
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    border-radius: 12px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    background: #fff;
+}
+.card-uri:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+}
+
+.uri-path {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+        "Liberation Mono", "Courier New", monospace;
+    font-size: 0.875rem;
+    background: rgba(0, 0, 0, 0.035);
+    border: 1px dashed rgba(0, 0, 0, 0.08);
+    border-radius: 8px;
+    padding: 0.25rem 0.5rem;
+}
+
+.empty-state i {
+    opacity: 0.6;
+}
+
+.placeholder {
+    display: inline-block;
+    min-height: 1rem;
+}
+.placeholder-wave .placeholder {
+    animation: placeholder-wave 1.6s linear infinite;
+}
+@keyframes placeholder-wave {
+    0% {
+        opacity: 0.5;
+    }
+    50% {
+        opacity: 0.2;
+    }
+    100% {
+        opacity: 0.5;
+    }
+}

@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Confirmação do Pedido de Transmissão</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" />
+  <link rel="stylesheet" href="../extra/css/principal.css" />
+  <style>
+    .assinatura-bloco {
+      font-size: 0.93rem;
+      word-break: break-all;
+      background: #f7f7fa;
+      padding: 0.6rem 1rem;
+      border-radius: 0.6rem;
+      color: #555;
+    }
+  </style>
+</head>
+
+<body class="bg-light py-4">
+  <div class="container" style="max-width: 650px;">
+    <div id="mensagem" class="alert alert-danger d-none"></div>
+
+    <div class="card shadow-sm border-0 p-4">
+
+      <div id="conteudo-confirmacao" style="display: none">
+        <h2 class="mb-4 text-center text-primary">
+          <i class="bi bi-check-circle-fill me-2 text-success"></i>
+          Pedido de Transmissão Registrado
+        </h2>
+
+        <p>
+          <strong>Requisitante:</strong> <span id="requisitante"></span><br />
+          <strong>CPF:</strong> <span id="cpf"></span>
+        </p>
+        <p>
+          <strong>Espaço físico:</strong> <span id="espaco"></span>
+        </p>
+        <div>
+          <strong>Horários:</strong>
+          <ul id="horarios" class="mb-2"></ul>
+        </div>
+        <p>
+          <strong>Observação:</strong> <span id="observacao"></span>
+        </p>
+        <div class="mb-3">
+          <label class="form-label mb-1 fw-semibold">
+            Assinatura digital do pedido:
+          </label>
+          <div class="assinatura-bloco" id="assinatura"></div>
+        </div>
+        <div class="alert alert-success mt-3">
+          <strong>Pedido registrado com sucesso!</strong>
+          <div class="mt-2 mb-1" style="font-size: 0.97rem">
+            Os responsáveis serão notificados.
+          </div>
+        </div>
+        <div class="d-flex justify-content-end">
+          <button class="btn btn-danger btn-lg" onclick="window.location.href='index.html'">
+            <i class="bi bi-arrow-left me-1"></i> Voltar
+          </button>
+        </div>
+      </div>
+
+      <div id="loading" class="text-center my-5">
+        <div class="spinner-border text-primary" role="status"></div>
+        <div class="mt-2">Carregando...</div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../extra/js/logout.js"></script>
+  <script src="../extra/js/fetchComToken.js"></script>
+  <script src="../extra/js/refreshAccessToken.js"></script>
+  <script>
+    async function carregarConfirmacao() {
+      const mensagem = document.getElementById("mensagem");
+      const conteudo = document.getElementById("conteudo-confirmacao");
+      const loading = document.getElementById("loading");
+
+      mensagem.classList.add("d-none");
+      conteudo.style.display = "none";
+      loading.style.display = "";
+
+      try {
+        let response = await fetchComToken("/backend/transmissao/confirmacao/");
+        if (response.status === 401) {
+          await refreshAccessToken();
+          return carregarConfirmacao();
+        }
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          mensagem.textContent = data.detail || "Erro ao carregar a confirmação.";
+          mensagem.classList.remove("d-none");
+          loading.style.display = "none";
+          return;
+        }
+
+        document.getElementById("requisitante").textContent = data.requisitante_nome;
+        document.getElementById("cpf").textContent = data.requisitante_cpf;
+        document.getElementById("espaco").textContent = data.espaco_fisico;
+        document.getElementById("observacao").textContent = data.observacao;
+
+        const ul = document.getElementById("horarios");
+        ul.innerHTML = "";
+        (data.horarios || []).forEach((h) => {
+          const li = document.createElement("li");
+          li.textContent = `${formatarDataHora(h.inicio)} – ${formatarHora(h.fim)}`;
+          ul.appendChild(li);
+        });
+
+        document.getElementById("assinatura").textContent = data.assinatura;
+
+        loading.style.display = "none";
+        conteudo.style.display = "";
+      } catch (err) {
+        mensagem.textContent = "Erro ao carregar a confirmação.";
+        mensagem.classList.remove("d-none");
+        loading.style.display = "none";
+      }
+    }
+
+    function formatarDataHora(iso) {
+      const dt = new Date(iso);
+      return `${String(dt.getDate()).padStart(2, "0")}/${String(dt.getMonth() + 1).padStart(2, "0")}/${dt.getFullYear()} ${String(dt.getHours()).padStart(2, "0")}:${String(dt.getMinutes()).padStart(2, "0")}`;
+    }
+
+    function formatarHora(iso) {
+      const dt = new Date(iso);
+      return `${String(dt.getHours()).padStart(2, "0")}:${String(dt.getMinutes()).padStart(2, "0")}`;
+    }
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      const token = localStorage.getItem("token");
+      if (!token) logout();
+      else carregarConfirmacao();
+    });
+  </script>
+</body>
+
+</html>

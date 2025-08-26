@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login - Relatórios do Moodle</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" />
+  <link rel="stylesheet" href="../extra/css/principal.css" />
+</head>
+
+<body>
+  <div class="container py-5">
+    <!-- Tela de Login -->
+    <div id="login-container">
+      <div class="login-card">
+        <div class="card-header login-header py-4">
+          <h2 class="text-center mb-0">
+            <i class="bi bi-shield-lock me-2"></i>Relatórios do Moodle
+          </h2>
+        </div>
+        <div class="card-body p-5">
+          <form id="login-form" novalidate>
+            <div class="mb-4">
+              <label for="cpf" class="form-label fw-bold">CPF</label>
+              <div class="input-group">
+                <span class="input-group-text" id="cpf-addon"><i class="bi bi-person-fill"></i></span>
+                <input type="text" id="cpf" class="form-control form-control-lg" placeholder="000.000.000-00"
+                  autocomplete="username" aria-describedby="cpf-addon" data-cpf-mask required />
+              </div>
+              <div class="form-text">Digite apenas números — a máscara será aplicada automaticamente.</div>
+            </div>
+            <div class="mb-4">
+              <label for="senha" class="form-label fw-bold">Senha</label>
+              <div class="input-group">
+                <span class="input-group-text" id="senha-addon"><i class="bi bi-key-fill"></i></span>
+                <input type="password" id="senha" class="form-control form-control-lg" placeholder="Digite sua senha"
+                  autocomplete="current-password" aria-describedby="senha-addon senha-toggle" required />
+                <button class="btn btn-outline-secondary" type="button" id="senha-toggle" aria-label="Mostrar senha">
+                  <i class="bi bi-eye" aria-hidden="true"></i>
+                </button>
+              </div>
+            </div>
+            <button type="submit" id="btn-entrar" class="btn btn-danger btn-lg w-100 mt-3">
+              <span class="spinner-border spinner-border-sm me-2 d-none" role="status" aria-hidden="true"></span>
+              <span id="login-text">Entrar</span>
+            </button>
+            <div id="login-error" class="alert alert-danger mt-3 d-none" role="alert"></div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="../../extra/js/logout.js"></script>
+  <script src="../../extra/js/fetchComToken.js"></script>
+  <script src="../../extra/js/refreshAccessToken.js"></script>
+  <script src="../../extra/js/verificarTokenERedirecionar.js"></script>
+  <script src="../../extra/js/cpfMask.js"></script>
+  <script>
+    verificarTokenERedirecionar("lista_relatorios.html");
+
+    // inicializa a máscara e foca no CPF
+    document.addEventListener("DOMContentLoaded", () => {
+      CPFMask.init();
+      document.getElementById("cpf").focus();
+
+      const loginError = localStorage.getItem("login-error");
+      if (loginError) {
+        const errorElement = document.getElementById("login-error");
+        errorElement.innerText = loginError;
+        errorElement.classList.remove("d-none");
+        localStorage.removeItem("login-error");
+      }
+    });
+
+    // Toggle de senha
+    const toggleBtn = document.getElementById("senha-toggle");
+    const senhaInput = document.getElementById("senha");
+    toggleBtn.addEventListener("click", () => {
+      const isPwd = senhaInput.type === "password";
+      senhaInput.type = isPwd ? "text" : "password";
+      toggleBtn.innerHTML = isPwd ? '<i class="bi bi-eye-slash" aria-hidden="true"></i>' : '<i class="bi bi-eye" aria-hidden="true"></i>';
+      toggleBtn.setAttribute("aria-label", isPwd ? "Ocultar senha" : "Mostrar senha");
+    });
+
+    // Submissão do formulário
+    document.getElementById("login-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const cpf = CPFMask.unmask(document.getElementById("cpf").value);
+      const senha = document.getElementById("senha").value;
+      const loginError = document.getElementById("login-error");
+      const btn = document.getElementById("btn-entrar");
+      const spinner = btn.querySelector(".spinner-border");
+      const loginText = document.getElementById("login-text");
+
+      loginError.classList.add("d-none");
+      btn.disabled = true;
+      spinner.classList.remove("d-none");
+      loginText.textContent = "Entrando...";
+
+      try {
+        const response = await fetch("/backend/api/token/", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username: cpf, password: senha }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.detail || "Credenciais inválidas");
+        }
+
+        const data = await response.json();
+        localStorage.setItem("token", data.access);
+        localStorage.setItem("refresh_token", data.refresh);
+        window.location.href = "listar_relatorios.html";
+      } catch (error) {
+        loginError.innerText = error.message;
+        loginError.classList.remove("d-none");
+      } finally {
+        btn.disabled = false;
+        spinner.classList.add("d-none");
+        loginText.textContent = "Entrar";
+      }
+    });
+  </script>
+</body>
+
+</html>

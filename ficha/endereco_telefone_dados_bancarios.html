@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dados Pessoais</title>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" />
+  <link rel="stylesheet" href="../extra/css/principal.css" />
+
+  <!-- jQuery + Mask (para máscaras de entrada) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
+</head>
+
+<body>
+  <div class="container py-5">
+
+    <!-- Cabeçalho -->
+    <div class="row mb-4 align-items-center">
+      <div class="col">
+        <h1 class="h2 mb-0">
+          <i class="bi bi-person-lines-fill me-2"></i>Dados Pessoais
+        </h1>
+      </div>
+      <div class="col-auto">
+        <button class="btn btn-outline-secondary" type="button" onclick="history.back()">
+          <i class="bi bi-arrow-left me-1"></i> Voltar
+        </button>
+      </div>
+    </div>
+
+    <!-- Alert -->
+    <div id="mensagem-erro" class="alert d-none" role="alert"></div>
+
+    <!-- Formulário -->
+    <form id="form-dados-pessoais" novalidate>
+      <!-- Endereço -->
+      <h2 class="h5 mt-2 mb-3 border-bottom pb-2"><i class="bi bi-geo-alt me-2"></i>Endereço</h2>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label for="cep" class="form-label">CEP</label>
+          <input type="text" id="cep" class="form-control" maxlength="9" required />
+          <div class="invalid-feedback">Informe um CEP válido</div>
+        </div>
+        <div class="col-md-6">
+          <label for="logradouro" class="form-label">Logradouro</label>
+          <input type="text" id="logradouro" class="form-control" required />
+          <div class="invalid-feedback">Informe o logradouro</div>
+        </div>
+        <div class="col-md-6">
+          <label for="numero" class="form-label">Número</label>
+          <input type="text" id="numero" class="form-control" required />
+          <div class="invalid-feedback">Informe o número</div>
+        </div>
+        <div class="col-md-6">
+          <label for="complemento" class="form-label">Complemento</label>
+          <input type="text" id="complemento" class="form-control" />
+          <div class="form-check mt-1">
+            <input class="form-check-input" type="checkbox" id="sem_complemento" />
+            <label class="form-check-label" for="sem_complemento">Não possui complemento</label>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <label for="bairro" class="form-label">Bairro</label>
+          <input type="text" id="bairro" class="form-control" required />
+          <div class="invalid-feedback">Informe o bairro</div>
+        </div>
+        <div class="col-md-6">
+          <label for="municipio" class="form-label">Município</label>
+          <input type="text" id="municipio" class="form-control" readonly required />
+        </div>
+        <div class="col-md-6">
+          <label for="uf" class="form-label">UF</label>
+          <input type="text" id="uf" class="form-control" readonly required />
+        </div>
+      </div>
+
+      <!-- Telefones -->
+      <h2 class="h5 mt-4 mb-1 border-bottom pb-2">
+        <i class="bi bi-telephone me-2"></i>Telefones
+      </h2>
+      <p class="text-muted small mb-3">
+        Preencha <strong>ao menos um</strong> telefone completo (DDD + número). O segundo é opcional.
+      </p>
+
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label for="ddd1" class="form-label">DDD 1</label>
+          <input type="text" id="ddd1" class="form-control" maxlength="2" />
+          <div class="invalid-feedback">Informe DDD e Telefone em pelo menos um contato.</div>
+        </div>
+        <div class="col-md-6">
+          <label for="telefone1" class="form-label">Telefone 1</label>
+          <input type="text" id="telefone1" class="form-control" />
+          <div class="invalid-feedback">Informe DDD e Telefone em pelo menos um contato.</div>
+        </div>
+
+        <div class="col-md-6">
+          <label for="ddd2" class="form-label">DDD 2</label>
+          <input type="text" id="ddd2" class="form-control" maxlength="2" />
+          <div class="invalid-feedback">Complete DDD e Telefone 2 ou deixe ambos vazios.</div>
+        </div>
+        <div class="col-md-6">
+          <label for="telefone2" class="form-label">Telefone 2</label>
+          <input type="text" id="telefone2" class="form-control" />
+          <div class="invalid-feedback">Complete DDD e Telefone 2 ou deixe ambos vazios.</div>
+        </div>
+      </div>
+
+      <!-- Dados bancários -->
+      <h2 class="h5 mt-4 mb-3 border-bottom pb-2"><i class="bi bi-credit-card-2-front me-2"></i>Dados bancários</h2>
+      <p class="text-muted small mb-3">
+        Informe uma <strong>conta corrente ativa</strong>, <strong>de sua titularidade</strong>. Não são aceitas:
+        <strong>conta-salário</strong>, <strong>conta poupança</strong> ou contas com
+        <strong>limite diário</strong> para depósitos/transferências. Em contas Bradesco com dígito verificador
+        <strong>“P”</strong>, utilize <strong>0</strong>; no BB, troque <strong>“X”</strong> por <strong>0</strong>; no
+        Santander, informe os dados exatamente como constam no extrato.
+        <strong>Dados incorretos podem acarretar atraso de até 60 dias no pagamento.</strong>
+      </p>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <label for="codigo_banco" class="form-label">Código do Banco</label>
+          <input type="text" id="codigo_banco" class="form-control" required />
+          <div class="invalid-feedback">Informe o código do banco</div>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label">Nome do Banco</label>
+          <span id="nome_banco" class="form-control-plaintext">Informe o código para buscar</span>
+        </div>
+        <div class="col-md-6">
+          <label for="agencia" class="form-label">Agência</label>
+          <input type="text" id="agencia" class="form-control" required />
+          <div class="invalid-feedback">Informe a agência</div>
+        </div>
+        <div class="col-md-6">
+          <label for="conta" class="form-label">Conta</label>
+          <input type="text" id="conta" class="form-control" required />
+          <div class="invalid-feedback">Informe o número da conta</div>
+        </div>
+        <div class="col-md-6">
+          <label for="digito" class="form-label">Dígito</label>
+          <input type="text" id="digito" class="form-control" required maxlength="1" />
+          <div class="invalid-feedback">Informe o dígito verificador</div>
+        </div>
+      </div>
+
+      <div class="text-end mt-4">
+        <button type="submit" class="btn btn-danger">
+          <i class="bi bi-save me-2"></i>Salvar
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    // === Máscaras ==============================================================
+    $(function () {
+      $("#cep").mask("00000-000");
+      $("#ddd1, #ddd2").mask("00");
+      $("#telefone1, #telefone2").mask("00000-0000");
+      $("#agencia").mask("0000");
+      $("#conta").mask("0000000");
+    });
+
+    // === Helpers UI / Erros ====================================================
+    function showAlert(msg, type = "danger") {
+      const box = document.getElementById("mensagem-erro");
+      box.className = `alert alert-${type}`;
+      box.innerHTML = `<i class="bi bi-exclamation-triangle-fill me-2"></i>${msg}`;
+      box.classList.remove("d-none");
+      box.scrollIntoView({ behavior: "smooth" });
+    }
+
+    function clearAlert() {
+      const box = document.getElementById("mensagem-erro");
+      box.className = "alert d-none";
+      box.textContent = "";
+    }
+
+    // Normaliza qualquer coisa em lista de strings
+    function toErrorList(x) {
+      if (x == null) return [];
+      if (Array.isArray(x)) return x.map(String);
+      const t = typeof x;
+      if (t === "string" || t === "number" || t === "boolean") return [String(x)];
+      if (t === "object") {
+        const out = [];
+        for (const [k, v] of Object.entries(x)) {
+          const child = toErrorList(v);
+          if (child.length) out.push(`${k}: ${child.join(", ")}`);
+        }
+        return out;
+      }
+      return [String(x)];
+    }
+
+    function setFieldErrorById(id, text) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.classList.add("is-invalid");
+      const fb = el.nextElementSibling;
+      if (fb && fb.classList.contains("invalid-feedback")) {
+        fb.textContent = text;
+      }
+    }
+
+    // === Validação =============================================================
+    function validarFormulario() {
+      const form = document.getElementById("form-dados-pessoais");
+      form.classList.add("was-validated");
+
+      // Regra: pelo menos UM telefone completo (DDD + número).
+      const d1 = document.getElementById("ddd1");
+      const t1 = document.getElementById("telefone1");
+      const d2 = document.getElementById("ddd2");
+      const t2 = document.getElementById("telefone2");
+
+      // limpa erros anteriores de telefone
+      [d1, t1, d2, t2].forEach((el) => {
+        el.classList.remove("is-invalid");
+      });
+
+      const onlyDigits = (s) => String(s || "").replace(/\D/g, "");
+      const has1 = d1.value.trim() && onlyDigits(t1.value);
+      const has2 = d2.value.trim() && onlyDigits(t2.value);
+
+      // precisa de pelo menos um par completo
+      if (!has1 && !has2) {
+        d1.classList.add("is-invalid");
+        t1.classList.add("is-invalid");
+        // mensagens já estão no HTML
+        return false;
+      }
+
+      // se começou a preencher o par 1, tem que completar ambos
+      if ((d1.value.trim() && !onlyDigits(t1.value)) || (!d1.value.trim() && onlyDigits(t1.value))) {
+        d1.classList.add("is-invalid");
+        t1.classList.add("is-invalid");
+        const msg = "Complete DDD e Telefone 1 ou limpe ambos.";
+        d1.nextElementSibling.textContent = msg;
+        t1.nextElementSibling.textContent = msg;
+        return false;
+      }
+
+      // idem para o par 2 (opcional)
+      if ((d2.value.trim() && !onlyDigits(t2.value)) || (!d2.value.trim() && onlyDigits(t2.value))) {
+        d2.classList.add("is-invalid");
+        t2.classList.add("is-invalid");
+        const msg = "Complete DDD e Telefone 2 ou deixe ambos vazios.";
+        d2.nextElementSibling.textContent = msg;
+        t2.nextElementSibling.textContent = msg;
+        return false;
+      }
+
+      // validações nativas dos outros campos
+      return form.checkValidity();
+    }
+
+    // === Bootstrap da página ===================================================
+    document.addEventListener("DOMContentLoaded", () => {
+      carregarDados();
+
+      // CEP -> ViaCEP
+      document.getElementById("cep").addEventListener("blur", buscarCEP);
+
+      // Toggle: "Não possui complemento"
+      const inputComplemento = document.getElementById("complemento");
+      const chkSemComplemento = document.getElementById("sem_complemento");
+      const syncComplementoDisabled = () => {
+        if (!inputComplemento || !chkSemComplemento) return;
+        const checked = chkSemComplemento.checked;
+        inputComplemento.disabled = checked;
+        if (checked) {
+          inputComplemento.value = "";
+          inputComplemento.classList.remove("is-invalid");
+          const fb = inputComplemento.nextElementSibling;
+          if (fb && fb.classList.contains("invalid-feedback")) fb.textContent = "";
+        }
+      };
+      if (chkSemComplemento) {
+        chkSemComplemento.addEventListener("change", syncComplementoDisabled);
+        syncComplementoDisabled(); // estado inicial
+      }
+
+      // Código do banco -> BrasilAPI
+      document.getElementById("codigo_banco").addEventListener("blur", function () {
+        const val = this.value.trim();
+        if (val.length >= 1) buscarNomeBanco(val);
+        else document.getElementById("nome_banco").textContent = "Informe o código para buscar";
+      });
+
+      // Submit
+      document.getElementById("form-dados-pessoais").addEventListener("submit", (e) => {
+        e.preventDefault();
+        enviarDados();
+      });
+    });
+
+    // === Carregar dados existentes ============================================
+    function carregarDados() {
+      fetch("/backend/ficha/endereco_telefone_dados_bancarios/", {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+      })
+        .then((response) => {
+          if (!response.ok) {
+            return response.json().then((err) => {
+              throw new Error(err.detail || "Erro ao carregar dados");
+            });
+          }
+          return response.json();
+        })
+        .then(preencherFormulario)
+        .catch((error) => showAlert(error.message));
+    }
+
+    function preencherFormulario(data) {
+      // Endereço
+      if (data?.endereco) {
+        document.getElementById("cep").value = data.endereco.cep || "";
+        document.getElementById("logradouro").value = data.endereco.logradouro || "";
+        document.getElementById("numero").value = data.endereco.numero || "";
+        document.getElementById("complemento").value = data.endereco.complemento || "";
+
+        const chkSemComplemento = document.getElementById("sem_complemento");
+        const inputComplemento = document.getElementById("complemento");
+        if (chkSemComplemento && inputComplemento) {
+          chkSemComplemento.checked = !Boolean(data.endereco.complemento);
+          inputComplemento.disabled = chkSemComplemento.checked;
+          if (chkSemComplemento.checked) inputComplemento.value = "";
+        }
+
+        document.getElementById("bairro").value = data.endereco.bairro || "";
+        document.getElementById("municipio").value = data.endereco.cm_municipio?.municipio || "";
+        document.getElementById("uf").value = data.endereco.cm_municipio?.cm_uf?.sigla || "";
+      }
+
+      // Telefones
+      if (Array.isArray(data.telefones) && data.telefones.length > 0) {
+        document.getElementById("ddd1").value = data.telefones[0].ddd || "";
+        document.getElementById("telefone1").value = data.telefones[0].numero || "";
+        if (data.telefones.length > 1) {
+          document.getElementById("ddd2").value = data.telefones[1].ddd || "";
+          document.getElementById("telefone2").value = data.telefones[1].numero || "";
+        }
+      }
+
+      // Banco
+      if (data.banco) {
+        document.getElementById("codigo_banco").value =
+          data.banco.codigo_banco != null ? data.banco.codigo_banco : "";
+        document.getElementById("agencia").value =
+          data.banco.agencia != null ? data.banco.agencia : "";
+        document.getElementById("conta").value =
+          data.banco.conta != null ? data.banco.conta : "";
+        document.getElementById("digito").value =
+          data.banco.digito_verificador_conta != null ? data.banco.digito_verificador_conta : "";
+
+        if (data.banco.codigo_banco) {
+          buscarNomeBanco(data.banco.codigo_banco);
+        } else {
+          document.getElementById("nome_banco").textContent = "Informe o código para buscar";
+        }
+      } else {
+        document.getElementById("nome_banco").textContent = "Informe o código para buscar";
+      }
+    }
+
+    // === CEP via ViaCEP ========================================================
+    function buscarCEP() {
+      const cep = document.getElementById("cep").value.replace(/\D/g, "");
+      if (cep.length !== 8) return;
+
+      fetch(`https://viacep.com.br/ws/${cep}/json/`)
+        .then((r) => r.json())
+        .then((data) => {
+          if (!data.erro) {
+            document.getElementById("logradouro").value = data.logradouro || "";
+            document.getElementById("bairro").value = data.bairro || "";
+            document.getElementById("municipio").value = data.localidade || "";
+            document.getElementById("uf").value = data.uf || "";
+          } else {
+            showAlert("CEP não encontrado");
+          }
+        })
+        .catch(() => showAlert("Erro ao consultar CEP"));
+    }
+
+    // === Banco via BrasilAPI ==================================================
+    async function buscarNomeBanco(codigoRaw) {
+      const span = document.getElementById("nome_banco");
+      const codigo = String(codigoRaw || "").replace(/\D/g, "");
+      if (!codigo) { span.textContent = "Informe o código para buscar"; return; }
+
+      span.textContent = "Buscando...";
+      try {
+        const r = await fetch(`https://brasilapi.com.br/api/banks/v1/${codigo}`);
+        if (!r.ok) throw new Error("Código não encontrado");
+        const data = await r.json();
+        span.textContent = data.fullName || "Banco não encontrado";
+      } catch (e) {
+        span.textContent = "Banco não encontrado";
+      }
+    }
+
+    // === Envio ================================================================
+    function enviarDados() {
+      clearAlert();
+      if (!validarFormulario()) return;
+
+      const onlyDigits = (s) => String(s || "").replace(/\D/g, "");
+
+      const ddd1 = document.getElementById("ddd1").value.trim();
+      const tel1 = onlyDigits(document.getElementById("telefone1").value);
+      const ddd2 = document.getElementById("ddd2").value.trim();
+      const tel2 = onlyDigits(document.getElementById("telefone2").value);
+
+      const telefonesPayload = [
+        { ddd: ddd1, numero: tel1 },
+        { ddd: ddd2, numero: tel2 },
+      ].filter(t => t.ddd && t.numero); // só pares completos entram
+
+      const dados = {
+        endereco: {
+          cep: document.getElementById("cep").value.replace(/\D/g, ""),
+          logradouro: document.getElementById("logradouro").value,
+          numero: document.getElementById("numero").value,
+          complemento: (document.getElementById("sem_complemento")?.checked ? "" : document.getElementById("complemento").value),
+          bairro: document.getElementById("bairro").value,
+          cm_municipio: {
+            municipio: document.getElementById("municipio").value,
+            cm_uf: { sigla: document.getElementById("uf").value },
+          },
+        },
+        telefones: telefonesPayload,
+        banco: {
+          codigo_banco: document.getElementById("codigo_banco").value,
+          agencia: document.getElementById("agencia").value,
+          conta: document.getElementById("conta").value,
+          digito_verificador_conta: document.getElementById("digito").value,
+        },
+      };
+
+      fetch("/backend/ficha/endereco_telefone_dados_bancarios/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(dados),
+      })
+        .then(async (response) => {
+          const data = await response.json().catch(() => ({}));
+
+          if (!response.ok) {
+            let msg = "Erro ao salvar os dados.";
+
+            if (data?.detail) msg = String(data.detail);
+            else if (data?.error) msg = String(data.error);
+            else if (data && typeof data === "object" && Object.keys(data).length) {
+              const linhas = [];
+
+              for (const [field, errs] of Object.entries(data)) {
+                if (field === "detail" || field === "non_field_errors") {
+                  linhas.push(...toErrorList(errs));
+                  continue;
+                }
+
+                // aninhados (ex.: endereco: { cep: ["inválido"] })
+                if (typeof errs === "object" && !Array.isArray(errs)) {
+                  for (const [sub, v] of Object.entries(errs)) {
+                    const lista = toErrorList(v);
+                    if (lista.length) {
+                      linhas.push(`${field}.${sub}: ${lista.join(", ")}`);
+                      setFieldErrorById(sub, lista.join(", "));
+                    }
+                  }
+                  continue;
+                }
+
+                const lista = toErrorList(errs);
+                if (!lista.length) continue;
+
+                linhas.push(`${field}: ${lista.join(", ")}`);
+                setFieldErrorById(field, lista.join(", "));
+              }
+
+              if (linhas.length) msg = "Corrija os seguintes campos:\n• " + linhas.join("\n• ");
+            }
+
+            throw new Error(msg);
+          }
+
+          return data;
+        })
+        .then(() => window.location.href = "dados_fi_pessoa_ficha.html")
+        .catch((err) => showAlert(err.message));
+    }
+  </script>
+</body>
+
+</html>

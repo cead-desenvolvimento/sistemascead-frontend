@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+  <meta charset="utf-8" />
+  <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+  <title>Dados Complementares</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" rel="stylesheet" />
+  <link href="../extra/css/principal.css" rel="stylesheet" />
+
+  <!-- jQuery + Mask (somente para máscaras) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.mask/1.14.16/jquery.mask.min.js"></script>
+</head>
+
+<body>
+  <div class="container py-5">
+
+    <!-- Cabeçalho -->
+    <div class="row mb-4 align-items-center">
+      <div class="col">
+        <h1 class="h2 mb-0">
+          <i class="bi bi-person-lines-fill me-2"></i>Dados Complementares
+        </h1>
+      </div>
+      <div class="col-auto">
+        <a href="javascript:history.back()" class="btn btn-outline-secondary">
+          <i class="bi bi-arrow-left me-1"></i> Voltar
+        </a>
+      </div>
+    </div>
+
+    <!-- Mensagem -->
+    <div id="mensagem"></div>
+
+    <!-- Bloco informativo -->
+    <div class="bg-light rounded p-3 mb-4">
+      <h5 class="mb-3">
+        <i class="bi bi-info-circle me-2"></i>Informações do Edital
+      </h5>
+      <div class="row g-3">
+        <div class="col-md-12">
+          <label class="form-label fw-bold">Nome:</label>
+          <div class="form-control-plaintext border-bottom pb-2" id="nome-pessoa-texto"></div>
+        </div>
+        <div class="col-md-12">
+          <label class="form-label fw-bold">Edital:</label>
+          <div class="form-control-plaintext border-bottom pb-2" id="edital-texto"></div>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-bold">Função:</label>
+          <div class="form-control-plaintext border-bottom pb-2" id="funcao-bolsista-texto"></div>
+        </div>
+        <div class="col-md-6">
+          <label class="form-label fw-bold">Oferta:</label>
+          <div class="form-control-plaintext border-bottom pb-2" id="curso-oferta-texto"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Formulário -->
+    <form id="form-dados-complementares" novalidate>
+      <!-- Identificação Pessoal -->
+      <h5 class="mt-4 mb-3 border-bottom pb-2"><i class="bi bi-person me-2"></i>Identificação Pessoal</h5>
+      <div class="row g-3 mb-4">
+        <div class="col-md-6">
+          <label for="sexo" class="form-label">Sexo</label>
+          <select id="sexo" class="form-select" required>
+            <option value=""></option>
+            <option value="Masculino">Masculino</option>
+            <option value="Feminino">Feminino</option>
+          </select>
+          <div class="invalid-feedback">Selecione o sexo</div>
+        </div>
+
+        <div class="col-md-6">
+          <label for="data_nascimento" class="form-label">Data de Nascimento</label>
+          <input type="date" id="data_nascimento" class="form-control" required />
+          <div class="invalid-feedback">Informe a data de nascimento</div>
+        </div>
+
+        <div class="col-md-6 position-relative">
+          <label for="cm_municipio" class="form-label">Município de Nascimento</label>
+          <input type="text" id="cm_municipio" class="form-control" autocomplete="off"
+            placeholder="Digite parte do nome..." required />
+          <input type="hidden" id="cm_municipio_id" />
+          <div class="invalid-feedback">Selecione um município válido</div>
+          <div class="form-check mt-1">
+            <input class="form-check-input" type="checkbox" id="estrangeiro" />
+            <label class="form-check-label" for="estrangeiro">Não nasci no Brasil</label>
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <label for="estado_civil" class="form-label">Estado Civil</label>
+          <select id="estado_civil" class="form-select" required>
+            <option value=""></option>
+            <option value="Solteiro(a)">Solteiro(a)</option>
+            <option value="Casado(a)">Casado(a)</option>
+            <option value="Divorciado(a)">Divorciado(a)</option>
+            <option value="Viúvo(a)">Viúvo(a)</option>
+            <option value="União Estável">União Estável</option>
+          </select>
+          <div class="invalid-feedback">Selecione o estado civil</div>
+        </div>
+      </div>
+
+      <!-- Família -->
+      <h5 class="mt-4 mb-3 border-bottom pb-2"><i class="bi bi-people me-2"></i>Família</h5>
+      <div class="row g-3 mb-4">
+        <div class="col-md-6">
+          <label for="nome_pai" class="form-label">Nome do Pai</label>
+          <input type="text" id="nome_pai" class="form-control" />
+          <div class="invalid-feedback">Informe o nome do pai ou marque 'Desconhecido'</div>
+          <div class="form-check mt-1">
+            <input class="form-check-input" type="checkbox" id="pai_desconhecido" />
+            <label class="form-check-label" for="pai_desconhecido">Desconhecido</label>
+          </div>
+        </div>
+
+        <div class="col-md-6">
+          <label for="nome_mae" class="form-label">Nome da Mãe</label>
+          <input type="text" id="nome_mae" class="form-control" required />
+          <div class="invalid-feedback">Informe o nome da mãe</div>
+        </div>
+
+        <div class="col-md-6">
+          <label for="nome_conjuge" class="form-label">Nome do Cônjuge</label>
+          <input type="text" id="nome_conjuge" class="form-control" />
+        </div>
+      </div>
+
+      <!-- Documentação -->
+      <h5 class="mt-4 mb-3 border-bottom pb-2"><i class="bi bi-card-text me-2"></i>Documentação</h5>
+      <div class="row g-3 mb-4">
+        <div class="col-md-6">
+          <label for="tipo_documento" class="form-label">Tipo de Documento</label>
+          <select id="tipo_documento" class="form-select" required>
+            <option value=""></option>
+            <option value="RG">RG</option>
+            <option value="CNH">CNH</option>
+          </select>
+          <div class="invalid-feedback">Selecione o tipo de documento</div>
+        </div>
+
+        <div class="col-md-6">
+          <label for="numero_documento" class="form-label">Número do Documento</label>
+          <input type="text" id="numero_documento" class="form-control" required />
+          <div class="invalid-feedback">Informe o número do documento</div>
+        </div>
+
+        <div class="col-md-6">
+          <label for="orgao_expedidor" class="form-label">Órgão Expedidor</label>
+          <input type="text" id="orgao_expedidor" class="form-control" required />
+          <div class="invalid-feedback">Informe o órgão expedidor</div>
+        </div>
+
+        <div class="col-md-6">
+          <label for="data_emissao" class="form-label">Data de Emissão</label>
+          <input type="date" id="data_emissao" class="form-control" required />
+          <div class="invalid-feedback">Informe a data de emissão</div>
+        </div>
+      </div>
+
+      <!-- Formação e Profissão -->
+      <h5 class="mt-4 mb-3 border-bottom pb-2"><i class="bi bi-mortarboard me-2"></i>Formação e Profissão</h5>
+      <div class="row g-3 mb-4">
+        <div class="col-md-6">
+          <label for="profissao" class="form-label">Profissão</label>
+          <input type="text" id="profissao" class="form-control" required />
+          <div class="invalid-feedback">Informe a profissão</div>
+        </div>
+
+        <div class="col-md-6">
+          <label for="area_ultimo_curso_superior" class="form-label">Área do Último Curso Superior</label>
+          <select id="area_ultimo_curso_superior" class="form-select" required>
+            <option value=""></option>
+            <option value="Biológicas">Biológicas</option>
+            <option value="Exatas">Exatas</option>
+            <option value="Humanas">Humanas</option>
+          </select>
+          <div class="invalid-feedback">Selecione uma área</div>
+        </div>
+
+        <div class="col-md-6">
+          <label for="ultimo_curso_titulacao" class="form-label">Último Curso/Titulação</label>
+          <input type="text" id="ultimo_curso_titulacao" class="form-control" required />
+          <div class="invalid-feedback">Informe o curso/titulação</div>
+        </div>
+
+        <div class="col-md-6">
+          <label for="instituicao_titulacao" class="form-label">Instituição da Titulação</label>
+          <input type="text" id="instituicao_titulacao" class="form-control" required />
+          <div class="invalid-feedback">Informe a instituição</div>
+        </div>
+      </div>
+
+      <div class="mt-4 d-flex justify-content-end gap-2">
+        <a href="javascript:history.back()" class="btn btn-outline-secondary">
+          <i class="bi bi-arrow-left me-1"></i> Voltar
+        </a>
+        <button type="submit" class="btn btn-danger">
+          <i class="bi bi-save me-1"></i> Salvar e continuar
+        </button>
+      </div>
+    </form>
+
+  </div>
+
+  <script>
+    // refs
+    const chkEstrangeiro = document.getElementById("estrangeiro");
+    const inputMunicipio = document.getElementById("cm_municipio");
+    const inputMunicipioId = document.getElementById("cm_municipio_id");
+    const chkPaiDesconhecido = document.getElementById("pai_desconhecido");
+    const inputPai = document.getElementById("nome_pai");
+
+    // máscaras
+    document.addEventListener("DOMContentLoaded", () => {
+      $("#numero_documento").mask("0000000000000");
+
+      carregarDados();
+
+      document.getElementById("estado_civil").addEventListener("change", atualizarCampoConjuge);
+      document.getElementById("form-dados-complementares").addEventListener("submit", (e) => {
+        e.preventDefault();
+        enviarDados();
+      });
+
+      // auto-complete município
+      inputMunicipio.addEventListener("input", buscarMunicipios);
+    });
+
+    // toggles
+    chkEstrangeiro.addEventListener("change", () => {
+      if (chkEstrangeiro.checked) {
+        inputMunicipio.value = "";
+        inputMunicipioId.value = "";
+        inputMunicipio.disabled = true;
+        inputMunicipio.classList.remove("is-invalid");
+        removerDropdownMunicipio();
+      } else {
+        inputMunicipio.disabled = false;
+      }
+    });
+
+    chkPaiDesconhecido.addEventListener("change", () => {
+      inputPai.value = "";
+      inputPai.disabled = chkPaiDesconhecido.checked;
+      if (!chkPaiDesconhecido.checked) inputPai.focus();
+    });
+
+    // load inicial
+    function carregarDados() {
+      fetch("/backend/ficha/dados_fi_pessoa_ficha/", {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+      })
+        .then((response) => {
+          if (!response.ok) {
+            return response.json().then((errorData) => {
+              throw new Error(errorData.detail || "Erro ao carregar dados. Não foi possível encontrar a associação necessária.");
+            });
+          }
+          return response.json();
+        })
+        .then((data) => {
+          window.dadosCarregados = data;
+
+          // header informativo
+          document.getElementById("nome-pessoa-texto").textContent = data.cm_pessoa__nome_display || "Não informado";
+          document.getElementById("edital-texto").textContent = data.ed_edital__numero_ano_edital_display || "Não informado";
+          document.getElementById("funcao-bolsista-texto").textContent = data.fi_funcao_bolsista?.funcao || "Não informado";
+          document.getElementById("curso-oferta-texto").textContent = data.ac_curso_oferta?.descricao || "Não informado";
+
+          // campos do fi_ficha
+          const campos = [
+            "area_ultimo_curso_superior", "estado_civil", "sexo", "tipo_documento", "data_nascimento",
+            "profissao", "numero_documento", "orgao_expedidor", "data_emissao", "nome_conjuge", "nome_pai",
+            "nome_mae", "ultimo_curso_titulacao", "instituicao_titulacao",
+          ];
+          campos.forEach((campo) => {
+            const el = document.getElementById(campo);
+            if (el && data.fi_ficha && data.fi_ficha[campo] != null) {
+              el.value = data.fi_ficha[campo];
+            }
+          });
+
+          // município
+          if (data.fi_ficha?.cm_municipio) {
+            const m = data.fi_ficha.cm_municipio;
+            inputMunicipio.value = `${m.municipio}, ${m.cm_uf.sigla}`;
+            inputMunicipioId.value = m.id;
+          }
+
+          atualizarCampoConjuge();
+        })
+        .catch((error) => mostrarErro(error.message, true));
+    }
+
+    function atualizarCampoConjuge() {
+      const estadoCivil = document.getElementById("estado_civil").value;
+      const campoConjuge = document.getElementById("nome_conjuge");
+      const desabilitar = ["Solteiro(a)", "Divorciado(a)", "Viúvo(a)"].includes(estadoCivil);
+      campoConjuge.value = desabilitar ? "" : campoConjuge.value;
+      campoConjuge.disabled = desabilitar;
+    }
+
+    function validarFormulario() {
+      const form = document.getElementById("form-dados-complementares");
+      form.classList.add("was-validated");
+
+      inputMunicipio.classList.remove("is-invalid");
+      inputPai.classList.remove("is-invalid");
+
+      let ok = true;
+
+      if (!chkEstrangeiro.checked) {
+        if (!inputMunicipio.value || !inputMunicipioId.value) {
+          inputMunicipio.classList.add("is-invalid");
+          ok = false;
+        }
+      }
+
+      if (!chkPaiDesconhecido.checked) {
+        if (!inputPai.value.trim()) {
+          inputPai.classList.add("is-invalid");
+          ok = false;
+        }
+      }
+
+      return ok && form.checkValidity();
+    }
+
+    function limparErros() {
+      const box = document.getElementById("mensagem");
+      box.innerHTML = "";
+      const form = document.getElementById("form-dados-complementares");
+      form.classList.remove("was-validated");
+      form.querySelectorAll(".is-invalid").forEach(el => el.classList.remove("is-invalid"));
+    }
+
+    function mostrarErro(mensagem, bloquearForm = false) {
+      const alerta = `
+      <div class="alert alert-danger" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>${mensagem.replace(/\n/g, "<br>")}
+      </div>
+    `;
+
+      if (bloquearForm) {
+        // some apenas o erro; remove cabeçalho, bloco informativo, formulário e botão voltar
+        const container = document.querySelector(".container");
+        if (container) container.innerHTML = alerta;
+        else document.body.innerHTML = `<div class="container py-5">${alerta}</div>`;
+      } else {
+        const box = document.getElementById("mensagem");
+        box.innerHTML = alerta;
+        box.scrollIntoView({ behavior: "smooth" });
+      }
+    }
+
+    function enviarDados() {
+      limparErros();
+      if (!validarFormulario()) return;
+
+      const funcaoBolsistaId = window.dadosCarregados?.fi_funcao_bolsista?.id ?? null;
+      const cursoOfertaId = window.dadosCarregados?.ac_curso_oferta?.id ?? null;
+      const idMun =
+        document.getElementById("cm_municipio_id").value ||
+        window.dadosCarregados?.fi_ficha?.cm_municipio?.id ||
+        null;
+
+      if (!funcaoBolsistaId) {
+        mostrarErro("Dados de função bolsista não encontrados.");
+        return;
+      }
+      if (!chkEstrangeiro.checked && !idMun) {
+        inputMunicipio.classList.add("is-invalid");
+        mostrarErro("Selecione um município válido");
+        return;
+      }
+
+      const dados = {
+        area_ultimo_curso_superior: document.getElementById("area_ultimo_curso_superior").value,
+        estado_civil: document.getElementById("estado_civil").value,
+        sexo: document.getElementById("sexo").value,
+        tipo_documento: document.getElementById("tipo_documento").value,
+        data_nascimento: document.getElementById("data_nascimento").value,
+        profissao: document.getElementById("profissao").value,
+        numero_documento: document.getElementById("numero_documento").value.replace(/\D/g, ""),
+        orgao_expedidor: document.getElementById("orgao_expedidor").value,
+        data_emissao: document.getElementById("data_emissao").value,
+        nome_conjuge: document.getElementById("nome_conjuge").disabled ? "" : document.getElementById("nome_conjuge").value,
+        nome_pai: document.getElementById("nome_pai").value,
+        nome_mae: document.getElementById("nome_mae").value,
+        ultimo_curso_titulacao: document.getElementById("ultimo_curso_titulacao").value,
+        instituicao_titulacao: document.getElementById("instituicao_titulacao").value,
+        cm_municipio: chkEstrangeiro.checked ? null : (idMun ? parseInt(idMun, 10) : null),
+        fi_funcao_bolsista: parseInt(funcaoBolsistaId, 10),
+        ac_curso_oferta: cursoOfertaId !== null ? parseInt(cursoOfertaId, 10) : null,
+      };
+
+      fetch("/backend/ficha/dados_fi_pessoa_ficha/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(dados),
+      })
+        .then(async (response) => {
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok) {
+            let msg = "Erro ao salvar os dados.";
+            if (data.detail) msg = data.detail;
+            else if (data.error) msg = data.error;
+            else if (typeof data === "object" && Object.keys(data).length) {
+              msg = "Corrija os seguintes campos:";
+              for (const [field, errors] of Object.entries(data)) {
+                msg += `\n• ${field}: ${errors.join(", ")}`;
+                const el = document.getElementById(field);
+                if (el) {
+                  el.classList.add("is-invalid");
+                  const fb = el.nextElementSibling;
+                  if (fb && fb.classList.contains("invalid-feedback")) {
+                    fb.textContent = errors.join(", ");
+                  }
+                }
+              }
+            }
+            throw new Error(msg);
+          }
+          return data;
+        })
+        .then(() => (window.location.href = "gera_ficha.html"))
+        .catch((err) => mostrarErro(err.message));
+    }
+
+    // Autocomplete de municípios
+    let municipioTimeout = null;
+    function buscarMunicipios() {
+      const termo = inputMunicipio.value.trim();
+      if (municipioTimeout) clearTimeout(municipioTimeout);
+      if (termo.length < 3) { removerDropdownMunicipio(); return; }
+
+      municipioTimeout = setTimeout(async () => {
+        try {
+          const url = `/backend/ficha/listar_municipios/?search=${encodeURIComponent(termo)}&page=1&page_size=10`;
+          const response = await fetch(url, {
+            method: "GET",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+          });
+          if (!response.ok) throw new Error("Erro ao buscar municípios");
+          const data = await response.json();
+          mostrarSugestoesMunicipios(Array.isArray(data.results) ? data.results : []);
+        } catch (err) {
+          console.error("Erro na busca de municípios:", err);
+        }
+      }, 350);
+    }
+
+    function mostrarSugestoesMunicipios(municipios) {
+      let dropdown = document.getElementById("dropdown-municipio");
+      if (!dropdown) {
+        dropdown = document.createElement("div");
+        dropdown.id = "dropdown-municipio";
+        dropdown.className = "dropdown-menu w-100 show";
+        inputMunicipio.parentNode.appendChild(dropdown);
+      }
+      dropdown.innerHTML = municipios.length
+        ? ""
+        : '<div class="dropdown-item text-muted">Nenhum município encontrado</div>';
+
+      municipios.forEach((m) => {
+        const item = document.createElement("button");
+        item.type = "button";
+        item.className = "dropdown-item";
+        item.textContent = `${m.municipio}, ${m.cm_uf.sigla}`;
+        item.addEventListener("click", () => selecionarMunicipio(m));
+        dropdown.appendChild(item);
+      });
+    }
+
+    function selecionarMunicipio(m) {
+      inputMunicipio.value = `${m.municipio}, ${m.cm_uf.sigla}`;
+      inputMunicipioId.value = m.id;
+      removerDropdownMunicipio();
+    }
+
+    function removerDropdownMunicipio() {
+      const dropdown = document.getElementById("dropdown-municipio");
+      if (dropdown) dropdown.remove();
+    }
+
+    // Fecha dropdown ao clicar fora
+    document.addEventListener("click", (e) => {
+      const dropdown = document.getElementById("dropdown-municipio");
+      if (dropdown && !dropdown.contains(e.target) && e.target !== inputMunicipio) {
+        removerDropdownMunicipio();
+      }
+    });
+  </script>
+</body>
+
+</html>

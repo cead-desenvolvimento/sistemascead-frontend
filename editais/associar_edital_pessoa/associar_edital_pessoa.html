@@ -1,0 +1,514 @@
+<!doctype html>
+<html lang="pt-br">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Associar Edital e Pessoa</title>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" />
+  <link rel="stylesheet" href="../../extra/css/principal.css" />
+  <style>
+    /* Dropdown de busca */
+    #search-results.dropdown-menu {
+      max-height: 320px;
+      overflow-y: auto;
+    }
+
+    .pessoa-item {
+      cursor: pointer;
+      padding: 8px 12px;
+      border-bottom: 1px solid #eee;
+    }
+
+    .pessoa-item:hover {
+      background: #f8f9fa;
+    }
+
+    .pessoa-nome {
+      font-weight: 500;
+    }
+
+    .pessoa-cpf {
+      font-size: .85rem;
+      color: #6c757d;
+    }
+
+    .selected-pessoa {
+      padding: .5rem .75rem;
+      background: #f0f8ff;
+      border: 1px solid #cfe2ff;
+      border-radius: .375rem;
+    }
+
+    .pagination-container {
+      display: flex;
+      justify-content: center;
+      padding: .25rem .5rem;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container py-5">
+
+    <!-- Cabeçalho -->
+    <div class="row mb-4 align-items-center">
+      <div class="col">
+        <h1 class="h2 mb-0">
+          <i class="bi bi-people me-2"></i>Associar Edital e Pessoa
+        </h1>
+      </div>
+      <div class="col-auto d-flex gap-2">
+        <a class="btn btn-outline-primary" href="/">
+          <i class="bi bi-list me-1"></i> Menu
+        </a>
+        <button class="btn btn-outline-danger" onclick="logout()">
+          <i class="bi bi-box-arrow-right me-1"></i> Sair
+        </button>
+      </div>
+    </div>
+
+    <!-- Alert global -->
+    <div id="status" class="alert d-none" role="alert"></div>
+
+    <!-- Seleção de Edital -->
+    <div class="card mb-4">
+      <div class="card-header">
+        <i class="bi bi-filter-square me-1"></i> Selecionar Edital
+      </div>
+      <div class="card-body">
+        <div class="row g-3 align-items-end">
+          <div class="col-md-6">
+            <label for="edital-seletor" class="form-label">Edital</label>
+            <select id="edital-seletor" class="form-select" onchange="selecionarEdital()">
+              <option value="">Selecione um edital...</option>
+            </select>
+          </div>
+          <div class="col-md-6">
+            <div id="edital-info" class="form-text">
+              Selecione um edital para visualizar e gerenciar suas associações.
+            </div>
+          </div>
+          <div class="col-12">
+            <div class="alert alert-info mb-0">
+              <i class="bi bi-info-circle me-1"></i>
+              Apenas pessoas com usuário no sistema (login = CPF) poderão ser associadas ao edital.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Gestão -->
+    <div id="gerenciamento-container" style="display:none">
+
+      <!-- Formulário -->
+      <div class="card mb-4">
+        <div class="card-header">
+          <i class="bi bi-plus-circle me-1"></i> Nova Associação
+        </div>
+        <div class="card-body">
+          <form id="associacao-form" novalidate>
+            <input type="hidden" id="pessoa-id" />
+            <div class="row g-3">
+              <div class="col-12">
+                <label for="pessoa-search" class="form-label">Buscar Pessoa</label>
+                <div class="input-group">
+                  <input type="text" id="pessoa-search" class="form-control"
+                    placeholder="Digite nome ou CPF (mín. 3 caracteres)..." autocomplete="off" />
+                  <button class="btn btn-outline-secondary" type="button" id="search-button">
+                    <i class="bi bi-search"></i>
+                  </button>
+                </div>
+                <div id="search-results" class="dropdown-menu w-100 mt-1" style="display:none"></div>
+
+                <!-- Selecionada -->
+                <div id="selected-pessoa" class="selected-pessoa mt-2 d-none">
+                  <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                      <div class="pessoa-nome" id="selected-pessoa-nome"></div>
+                      <div class="pessoa-cpf" id="selected-pessoa-cpf"></div>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="limparSelecaoPessoa()">
+                      <i class="bi bi-x"></i>
+                    </button>
+                  </div>
+                </div>
+                <div class="form-text">Somente usuários existentes poderão ser associados.</div>
+              </div>
+
+              <div class="col-12 text-end">
+                <button type="submit" id="submit-button" class="btn btn-danger" disabled>
+                  <span class="spinner-border spinner-border-sm me-2 d-none" role="status" aria-hidden="true"></span>
+                  <i class="bi bi-save me-1"></i><span id="submit-text">Adicionar</span>
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Lista -->
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <div><i class="bi bi-list-ul me-1"></i> Pessoas associadas ao edital</div>
+          <span id="association-count" class="badge text-bg-light">0</span>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Nome</th>
+                  <th>CPF</th>
+                  <th class="text-end">Ações</th>
+                </tr>
+              </thead>
+              <tbody id="lista-associacoes">
+                <tr>
+                  <td colspan="3" class="text-center py-4 text-muted">Carregando dados...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Scripts comuns -->
+  <script src="../../extra/js/logout.js"></script>
+  <script src="../../extra/js/fetchComToken.js"></script>
+  <script src="../../extra/js/refreshAccessToken.js"></script>
+
+  <script>
+    let editalSelecionado = null;
+    let pessoaSelecionada = null;
+    let buscaTimeout = null;
+    let paginaBusca = 1;
+    let paginasTotal = 1;
+
+    // Alerts
+    function showStatus(msg, type = "danger") {
+      const el = document.getElementById("status");
+      el.className = `alert alert-${type}`;
+      el.innerHTML = msg;
+      el.classList.remove("d-none");
+    }
+    function clearStatus() {
+      const el = document.getElementById("status");
+      el.className = "alert d-none";
+      el.innerHTML = "";
+    }
+
+    // Utils
+    function formatarCPF(cpf) {
+      const v = String(cpf || "").replace(/\D/g, "");
+      return v.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+    }
+
+    // Carrega editais
+    async function carregarEditais() {
+      try {
+        let resp = await fetchComToken("/backend/editais/associar_edital_pessoa/");
+        if (resp.status === 401) {
+          await refreshAccessToken();
+          resp = await fetchComToken("/backend/editais/associar_edital_pessoa/");
+        }
+        if (!resp.ok) throw new Error("Erro ao buscar editais.");
+
+        const editais = await resp.json();
+        const sel = document.getElementById("edital-seletor");
+        sel.innerHTML = '<option value="">Selecione um edital...</option>';
+
+        editais.forEach(ed => {
+          const o = document.createElement("option");
+          o.value = ed.id;
+          o.textContent = `${ed.numero}/${ed.ano} — ${ed.descricao}`;
+          sel.appendChild(o);
+        });
+
+        if (!Array.isArray(editais) || editais.length === 0) {
+          showStatus("Não há editais válidos disponíveis.", "warning");
+        }
+      } catch (e) {
+        showStatus(e.message || "Falha ao carregar editais.");
+      }
+    }
+
+    async function selecionarEdital() {
+      const id = document.getElementById("edital-seletor").value;
+      const info = document.getElementById("edital-info");
+      const bloco = document.getElementById("gerenciamento-container");
+
+      if (!id) {
+        bloco.style.display = "none";
+        info.textContent = "Selecione um edital para visualizar e gerenciar suas associações.";
+        return;
+      }
+
+      editalSelecionado = id;
+      bloco.style.display = "block";
+      info.textContent = "Gerenciando associações para o edital selecionado.";
+      await carregarAssociacoes();
+    }
+
+    // Busca usuários no backend
+    async function buscarPessoas() {
+      const termo = document.getElementById("pessoa-search").value.trim();
+      const box = document.getElementById("search-results");
+
+      // reset de página quando termo muda bastante
+      if (termo.length < 3) { box.style.display = "none"; return; }
+
+      if (buscaTimeout) clearTimeout(buscaTimeout);
+      buscaTimeout = setTimeout(async () => {
+        box.style.display = "block";
+        box.innerHTML = `
+          <div class="text-center p-3">
+            <span class="spinner-border spinner-border-sm text-primary"></span>
+            <span class="ms-2">Buscando...</span>
+          </div>`;
+
+        try {
+          let url = `/backend/editais/associar_edital_pessoa/usuarios/?search=${encodeURIComponent(termo)}&page=${paginaBusca}&page_size=10`;
+          let resp = await fetchComToken(url);
+          if (resp.status === 401) {
+            await refreshAccessToken();
+            resp = await fetchComToken(url);
+          }
+          if (!resp.ok) throw new Error("Erro ao buscar pessoas.");
+
+          const data = await resp.json();
+          const pessoas = data.results || [];
+          paginasTotal = data.total_pages || 1;
+          box.innerHTML = "";
+
+          if (!pessoas.length) {
+            box.innerHTML = `<div class="text-center p-3 text-muted">Nenhuma pessoa encontrada</div>`;
+          } else {
+            pessoas.forEach(p => {
+              const item = document.createElement("div");
+              item.className = "pessoa-item";
+              item.innerHTML = `
+                <div class="pessoa-nome">${p.nome}</div>
+                <div class="pessoa-cpf">CPF: ${formatarCPF(p.cpf)}</div>`;
+              item.addEventListener("click", () => selecionarPessoa(p));
+              box.appendChild(item);
+            });
+          }
+
+          // Paginação
+          if (paginasTotal > 1) {
+            const pag = document.createElement("div");
+            pag.className = "pagination-container";
+            pag.innerHTML = `
+              <nav aria-label="Navegação">
+                <ul class="pagination pagination-sm mb-0">
+                  <li class="page-item ${paginaBusca === 1 ? "disabled" : ""}">
+                    <a class="page-link" href="#" aria-label="Anterior">&laquo;</a>
+                  </li>
+                  ${Array.from({ length: paginasTotal }, (_, i) => i + 1).slice(Math.max(0, paginaBusca - 3), Math.min(paginasTotal, paginaBusca + 2)).map(n =>
+              `<li class="page-item ${n === paginaBusca ? "active" : ""}"><a class="page-link" href="#">${n}</a></li>`).join("")}
+                  <li class="page-item ${paginaBusca === paginasTotal ? "disabled" : ""}">
+                    <a class="page-link" href="#" aria-label="Próximo">&raquo;</a>
+                  </li>
+                </ul>
+              </nav>`;
+            // handlers
+            const ul = pag.querySelector("ul");
+            ul.children[0].addEventListener("click", e => { e.preventDefault(); if (paginaBusca > 1) { paginaBusca--; buscarPessoas(); } });
+            ul.lastElementChild.addEventListener("click", e => { e.preventDefault(); if (paginaBusca < paginasTotal) { paginaBusca++; buscarPessoas(); } });
+            Array.from(ul.children).slice(1, -1).forEach(li => {
+              li.addEventListener("click", e => { e.preventDefault(); const n = parseInt(li.innerText, 10); if (!isNaN(n)) { paginaBusca = n; buscarPessoas(); } });
+            });
+            box.appendChild(pag);
+          }
+
+        } catch (e) {
+          box.innerHTML = `<div class="text-center p-3 text-danger">Erro ao buscar: ${e.message}</div>`;
+        }
+      }, 450);
+    }
+
+    function selecionarPessoa(p) {
+      pessoaSelecionada = p;
+      document.getElementById("pessoa-id").value = p.id;
+
+      document.getElementById("selected-pessoa-nome").textContent = p.nome || "";
+      document.getElementById("selected-pessoa-cpf").textContent = `CPF: ${formatarCPF(p.cpf)}`;
+      document.getElementById("selected-pessoa").classList.remove("d-none");
+
+      document.getElementById("search-results").style.display = "none";
+      document.getElementById("pessoa-search").value = "";
+
+      document.getElementById("submit-button").disabled = false;
+    }
+
+    function limparSelecaoPessoa() {
+      pessoaSelecionada = null;
+      document.getElementById("pessoa-id").value = "";
+      document.getElementById("selected-pessoa").classList.add("d-none");
+      document.getElementById("submit-button").disabled = true;
+    }
+
+    // Lista de associações
+    async function getUserIdPorCPF(cpf) {
+      try {
+        let resp = await fetchComToken(`/backend/editais/usuario-por-cpf/${cpf}/`);
+        if (resp.status === 401) {
+          await refreshAccessToken();
+          resp = await fetchComToken(`/backend/editais/usuario-por-cpf/${cpf}/`);
+        }
+        if (!resp.ok) return null;
+        const data = await resp.json();
+        return data?.id ?? null;
+      } catch { return null; }
+    }
+
+    async function carregarAssociacoes() {
+      if (!editalSelecionado) return;
+
+      const tbody = document.getElementById("lista-associacoes");
+      tbody.innerHTML = `<tr><td colspan="3" class="text-center py-4 text-muted">Carregando dados...</td></tr>`;
+
+      try {
+        let resp = await fetchComToken(`/backend/editais/associar_edital_pessoa/edital/${editalSelecionado}/`);
+        if (resp.status === 401) {
+          await refreshAccessToken();
+          resp = await fetchComToken(`/backend/editais/associar_edital_pessoa/edital/${editalSelecionado}/`);
+        }
+        if (!resp.ok) {
+          const err = await resp.json().catch(() => ({}));
+          throw new Error(err.detail || "Erro ao buscar associações.");
+        }
+
+        const associacoes = (await resp.json() || []).filter(a => a && a.cm_pessoa);
+        document.getElementById("association-count").textContent = associacoes.length;
+
+        if (!associacoes.length) {
+          tbody.innerHTML = `<tr><td colspan="3" class="text-center py-4 text-muted">Nenhuma pessoa associada a este edital.</td></tr>`;
+          return;
+        }
+
+        tbody.innerHTML = "";
+        for (const a of associacoes) {
+          const userId = await getUserIdPorCPF(a.cm_pessoa.cpf);
+          const adminBtn = userId
+            ? `<a href="/backend/admin/auth/user/${userId}/change/" target="_blank" class="btn btn-sm btn-outline-primary me-1">
+                 <i class="bi bi-pencil-square"></i> Editar grupos
+               </a>`
+            : `<span class="text-muted me-2">Usuário não encontrado</span>`;
+
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${a.cm_pessoa.nome}</td>
+            <td>${formatarCPF(a.cm_pessoa.cpf)}</td>
+            <td class="text-end">
+              ${adminBtn}
+              <button class="btn btn-sm btn-outline-danger" onclick="removerAssociacao(${a.id})">
+                <i class="bi bi-trash"></i> Remover
+              </button>
+            </td>`;
+          tbody.appendChild(tr);
+        }
+      } catch (e) {
+        tbody.innerHTML = `<tr><td colspan="3" class="text-center py-4 text-danger">Erro ao carregar dados.</td></tr>`;
+        showStatus(e.message || "Falha ao carregar associações.");
+      }
+    }
+
+    async function removerAssociacao(id) {
+      if (!confirm("Tem certeza que deseja remover esta associação?")) return;
+
+      try {
+        let resp = await fetchComToken(`/backend/editais/associar_edital_pessoa/${id}/`, { method: "DELETE" });
+        if (resp.status === 401) {
+          await refreshAccessToken();
+          resp = await fetchComToken(`/backend/editais/associar_edital_pessoa/${id}/`, { method: "DELETE" });
+        }
+        if (!resp.ok) {
+          const err = await resp.json().catch(() => ({}));
+          throw new Error(err.detail || "Erro ao remover associação.");
+        }
+        showStatus("Associação removida com sucesso!", "success");
+        await carregarAssociacoes();
+      } catch (e) {
+        showStatus(e.message || "Falha ao remover associação.");
+      }
+    }
+
+    // Salvar nova associação
+    async function salvarAssociacao(e) {
+      e.preventDefault();
+      const btn = document.getElementById("submit-button");
+      const spin = btn.querySelector(".spinner-border");
+
+      const pessoaId = parseInt(document.getElementById("pessoa-id").value, 10);
+      if (!editalSelecionado || !pessoaId) {
+        showStatus("Selecione um edital e uma pessoa.", "warning");
+        return;
+      }
+
+      btn.disabled = true; spin.classList.remove("d-none");
+
+      try {
+        let resp = await fetchComToken(`/backend/editais/associar_edital_pessoa/edital/${editalSelecionado}/`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ cm_pessoa: pessoaId }),
+        });
+        if (resp.status === 401) {
+          await refreshAccessToken();
+          resp = await fetchComToken(`/backend/editais/associar_edital_pessoa/edital/${editalSelecionado}/`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ cm_pessoa: pessoaId }),
+          });
+        }
+
+        const data = await resp.json().catch(() => ({}));
+        if (!resp.ok) {
+          const msg = data?.non_field_errors?.join(", ") || data?.detail || "Erro ao criar associação.";
+          throw new Error(msg);
+        }
+
+        showStatus("Pessoa associada ao edital com sucesso!", "success");
+        limparSelecaoPessoa();
+        await carregarAssociacoes();
+      } catch (e) {
+        showStatus(e.message || "Falha ao criar associação.");
+      } finally {
+        btn.disabled = false; spin.classList.add("d-none");
+      }
+    }
+
+    // Eventos
+    document.addEventListener("DOMContentLoaded", () => {
+      const token = localStorage.getItem("token");
+      if (!token) return logout();
+
+      carregarEditais();
+
+      document.getElementById("associacao-form").addEventListener("submit", salvarAssociacao);
+      document.getElementById("pessoa-search").addEventListener("input", () => { paginaBusca = 1; buscarPessoas(); });
+      document.getElementById("pessoa-search").addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); paginaBusca = 1; buscarPessoas(); } });
+      document.getElementById("search-button").addEventListener("click", () => { paginaBusca = 1; buscarPessoas(); });
+
+      // fecha dropdown ao clicar fora
+      document.addEventListener("click", (e) => {
+        const box = document.getElementById("search-results");
+        const input = document.getElementById("pessoa-search");
+        const btn = document.getElementById("search-button");
+        if (box && box.style.display !== "none" && !box.contains(e.target) && e.target !== input && e.target !== btn) {
+          box.style.display = "none";
+        }
+      });
+    });
+  </script>
+</body>
+
+</html>

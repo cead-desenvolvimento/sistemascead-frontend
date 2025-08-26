@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="pt-br">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Formação Acadêmica</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" />
+  <link rel="stylesheet" href="../extra/css/principal.css" />
+  <link rel="stylesheet" href="../extra/css/logo-bg.css" />
+</head>
+
+<body class="bg-light py-3">
+  <div class="container position-relative" style="min-height: 600px">
+    <img src="../extra/img/logo.png" alt="Logo" class="logo-fundo" />
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+        <div class="card p-4 shadow-sm">
+          <h1 class="mb-4 text-center">Formação Acadêmica</h1>
+
+          <div id="alerta-inscricao" class="alert alert-warning d-none" role="alert"></div>
+          <div id="status-message" class="mt-2" role="status" aria-live="polite"></div>
+
+          <form id="form-formacao" novalidate>
+            <div class="mb-3">
+              <label for="formacaoFiltro" class="form-label">Busque sua formação acadêmica (graduação)</label>
+              <input type="text" id="formacaoFiltro" class="form-control" placeholder="Digite parte do curso"
+                autocomplete="off" />
+              <div class="form-text">Ex.: “Administração”, “Engenharia de…”, “Direito”…</div>
+            </div>
+
+            <div class="mb-3">
+              <label for="formacao" class="form-label">Selecione a graduação</label>
+              <select id="formacao" class="form-select" required disabled>
+                <option value="" selected disabled>Carregando formações…</option>
+              </select>
+              <div class="invalid-feedback">Selecione uma formação.</div>
+            </div>
+
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label for="inicio" class="form-label">Data de início</label>
+                <input type="date" id="inicio" class="form-control" required />
+                <div class="invalid-feedback">Informe a data de início.</div>
+              </div>
+              <div class="col-md-6">
+                <label for="fim" class="form-label">Data de conclusão</label>
+                <input type="date" id="fim" class="form-control" required />
+                <div class="invalid-feedback">Informe a data de conclusão.</div>
+              </div>
+            </div>
+
+            <button type="submit" id="btn-submit" class="btn btn-primary w-100 mt-4">
+              <span class="btn-label">
+                <i class="bi bi-plus-circle me-2"></i> Adicionar formação
+              </span>
+              <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+            </button>
+          </form>
+
+          <h2 class="mt-4">Formações cadastradas</h2>
+
+          <div class="card p-3 mb-4">
+            <div id="lista-loading" class="text-muted small mb-2">Carregando…</div>
+            <table class="table mb-0">
+              <thead>
+                <tr>
+                  <th>Titulação</th>
+                  <th>Curso</th>
+                  <th>Início</th>
+                  <th>Conclusão</th>
+                  <th class="text-end">Ações</th>
+                </tr>
+              </thead>
+              <tbody id="lista-formacoes"></tbody>
+            </table>
+            <div id="lista-vazia" class="text-muted small mt-2 d-none">Nenhuma formação cadastrada.</div>
+          </div>
+
+          <div class="d-flex justify-content-end gap-2">
+            <button id="proximo-passo" class="btn btn-success" disabled>
+              <i class="bi bi-arrow-right-circle me-2"></i> Próximo passo
+            </button>
+            <button id="voltar-index" class="btn btn-outline-secondary">
+              <i class="bi bi-arrow-left-circle me-2"></i> Voltar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="../extra/js/inscricao/formacao.js"></script>
+</body>
+
+</html>

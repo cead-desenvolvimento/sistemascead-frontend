@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="pt-br">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dados Pessoais</title>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" />
+  <link rel="stylesheet" href="../extra/css/principal.css" />
+  <link rel="stylesheet" href="../extra/css/logo-bg.css" />
+  <link rel="stylesheet" href="../extra/css/inscricao/pessoa.css" />
+</head>
+
+<body class="bg-light py-3">
+  <div class="container position-relative" style="min-height: 600px">
+    <img src="../extra/img/logo.png" alt="Logo" class="logo-fundo" />
+    <div class="row justify-content-center">
+      <div class="col-lg-6">
+        <div class="card p-4 shadow-sm">
+          <h1 class="mb-1 text-center">
+            <i class="bi bi-person-vcard me-2"></i>Dados Pessoais
+          </h1>
+          <p class="text-muted text-center mb-4">Informe seu CPF para seguirmos com a inscrição.</p>
+
+          <!-- Status global -->
+          <div id="status" class="alert d-none" role="alert" aria-live="polite"></div>
+
+          <form id="form-pessoa" novalidate>
+            <!-- CPF -->
+            <div class="mb-3" id="cpf-section">
+              <label for="cpf" class="form-label fw-semibold">CPF</label>
+              <div class="input-group input-group-lg">
+                <span class="input-group-text" id="cpf-addon"><i class="bi bi-person-badge"></i></span>
+                <input type="text" class="form-control text-center" id="cpf" inputmode="numeric" maxlength="14"
+                  autocomplete="off" placeholder="000.000.000-00" aria-describedby="cpf-addon cpf-help" required />
+              </div>
+              <div id="cpf-help" class="help mt-1">Somente números — a máscara é aplicada automaticamente.</div>
+            </div>
+
+            <!-- Dados (só aparece se não existir cadastro) -->
+            <div id="dados-section" class="d-none">
+              <div class="mb-3">
+                <label for="nome" class="form-label fw-semibold">Nome</label>
+                <input type="text" class="form-control form-control-lg" id="nome" required />
+              </div>
+              <div class="mb-3">
+                <label for="email" class="form-label fw-semibold">E-mail</label>
+                <div class="input-group input-group-lg">
+                  <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                  <input type="email" class="form-control" id="email" autocomplete="email" required />
+                </div>
+              </div>
+              <div class="mb-3">
+                <label for="confirm-email" class="form-label fw-semibold">Confirme o E-mail</label>
+                <div class="input-group input-group-lg">
+                  <span class="input-group-text"><i class="bi bi-envelope-check"></i></span>
+                  <input type="email" class="form-control" id="confirm-email" autocomplete="email" required />
+                </div>
+                <div class="help mt-1">Usaremos esse e-mail para contato.</div>
+              </div>
+              <div class="d-flex justify-content-end gap-2">
+                <button type="submit" id="btn-salvar" class="btn btn-danger">
+                  <span class="spinner-border spinner-border-sm me-2 d-none" role="status" aria-hidden="true"></span>
+                  <i class="bi bi-check-circle me-1"></i><span id="btn-salvar-texto">Salvar</span>
+                </button>
+                <button type="button" id="btn-voltar" class="btn btn-outline-secondary">
+                  <i class="bi bi-arrow-left me-1"></i> Voltar
+                </button>
+              </div>
+            </div>
+          </form>
+
+          <!-- Botão tentar novamente (mostrado em erro de consulta) -->
+          <div class="d-grid mt-3">
+            <button id="btn-recarregar" type="button" class="btn btn-outline-secondary d-none">
+              <i class="bi bi-arrow-clockwise me-1"></i> Tentar novamente
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../extra/js/inscricao/pessoa.js"></script>
+</body>
+
+</html>

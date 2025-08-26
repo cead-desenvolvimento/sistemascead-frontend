@@ -1,0 +1,454 @@
+<!doctype html>
+<html lang="pt-br">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Validação de Documentos</title>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" />
+  <link rel="stylesheet" href="../../extra/css/principal.css" />
+</head>
+
+<body>
+  <div class="container py-5">
+
+    <!-- Cabeçalho -->
+    <div class="row mb-4 align-items-center">
+      <div class="col">
+        <h1 class="h2 mb-0" id="titulo-vaga">
+          <i class="bi bi-file-earmark-check me-2"></i>Validação de Documentos
+        </h1>
+      </div>
+      <div class="col-auto d-flex gap-2">
+        <a href="listar_editais.html" class="btn btn-outline-secondary">
+          <i class="bi bi-arrow-left me-1"></i> Voltar
+        </a>
+        <button class="btn btn-outline-danger" onclick="logout()">
+          <i class="bi bi-box-arrow-right me-1"></i> Sair
+        </button>
+      </div>
+    </div>
+
+    <!-- Alert global -->
+    <div id="status" class="alert d-none" role="alert"></div>
+
+    <!-- Barra superior de controles -->
+    <div class="d-flex justify-content-end align-items-center mb-3 gap-2">
+      <span class="text-muted">Candidatos por página:</span>
+      <select id="page-size-select" class="form-select form-select-sm" style="width:auto">
+        <option value="5">5</option>
+        <option value="10" selected>10</option>
+        <option value="20">20</option>
+      </select>
+    </div>
+
+    <!-- Tabela de inscritos -->
+    <div class="table-responsive shadow-sm">
+      <table class="table table-hover align-middle mb-0">
+        <thead class="table-light">
+          <tr>
+            <th style="width: 22%">Nome</th>
+            <th style="width: 53%">Documentos</th>
+            <th style="width: 20%">Justificativa</th>
+            <th style="width: 5%" class="text-end">Ações</th>
+          </tr>
+        </thead>
+        <tbody id="inscritos-list">
+          <tr>
+            <td colspan="4" class="text-center py-4 text-muted">Carregando inscritos...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Rodapé: paginação -->
+    <div class="d-flex justify-content-between align-items-center mt-3">
+      <div id="pagination-info" class="text-muted">Mostrando 0 de 0 inscritos</div>
+      <nav aria-label="Navegação de páginas">
+        <ul class="pagination pagination-sm mb-0" id="pagination-controls"></ul>
+      </nav>
+    </div>
+
+  </div>
+
+  <!-- Scripts comuns -->
+  <script src="../../extra/js/logout.js"></script>
+  <script src="../../extra/js/fetchComToken.js"></script>
+  <script src="../../extra/js/refreshAccessToken.js"></script>
+
+  <script>
+    let inscritos = [];
+    let maximoDePontos = 0;
+    let paginationData = {};
+    let currentPage = 1;
+    let blobUrlAtual = null;
+
+    // Helpers de alert
+    function showStatus(msg, type = "danger") {
+      const el = document.getElementById("status");
+      el.className = `alert alert-${type}`;
+      el.innerHTML = msg;
+      el.classList.remove("d-none");
+    }
+    function clearStatus() {
+      const el = document.getElementById("status");
+      el.className = "alert d-none";
+      el.innerHTML = "";
+    }
+
+    // Download/preview com token
+    async function baixarArquivoComToken(url, inscritoId = null) {
+      const globalError = document.getElementById("status");
+      const candError = inscritoId ? document.getElementById(`error-message-${inscritoId}`) : null;
+
+      try {
+        let resp = await fetchComToken(url, { method: "GET" });
+        if (resp.status === 401) {
+          await refreshAccessToken();
+          resp = await fetchComToken(url, { method: "GET" });
+        }
+        if (!resp.ok) {
+          const erro = await resp.json().catch(() => ({}));
+          const msg = erro.detail || "Erro ao baixar arquivo.";
+          if (candError) candError.textContent = msg;
+          else showStatus(msg);
+          return;
+        }
+
+        const blob = await resp.blob();
+        if (blobUrlAtual) URL.revokeObjectURL(blobUrlAtual);
+        blobUrlAtual = URL.createObjectURL(blob);
+        window.open(blobUrlAtual, "_blank");
+
+        if (candError) candError.textContent = "";
+        clearStatus();
+      } catch (e) {
+        const msg = "Erro inesperado ao tentar baixar o arquivo.";
+        if (candError) candError.textContent = msg;
+        else showStatus(msg);
+      }
+    }
+    window.addEventListener("beforeunload", () => {
+      if (blobUrlAtual) URL.revokeObjectURL(blobUrlAtual);
+    });
+
+    // Paginação
+    document.getElementById("page-size-select").addEventListener("change", () => {
+      currentPage = 1;
+      carregarInscritos(currentPage, document.getElementById("page-size-select").value);
+    });
+
+    function irParaPagina(pagina) {
+      currentPage = pagina;
+      carregarInscritos(pagina, document.getElementById("page-size-select").value);
+    }
+
+    function renderizarControlesPaginacao() {
+      const ul = document.getElementById("pagination-controls");
+      const info = document.getElementById("pagination-info");
+      ul.innerHTML = "";
+
+      if (!paginationData || !paginationData.count) {
+        info.textContent = "Mostrando 0 de 0 inscritos";
+        return;
+      }
+
+      // anterior
+      const prev = document.createElement("li");
+      prev.className = `page-item ${paginationData.previous === null ? "disabled" : ""}`;
+      prev.innerHTML = `<a class="page-link" href="#" aria-label="Anterior"${paginationData.previous !== null ? ` onclick="irParaPagina(${paginationData.previous}); return false;"` : ""}><i class="bi bi-chevron-left"></i></a>`;
+      ul.appendChild(prev);
+
+      const maxPagesToShow = 5;
+      let startPage = Math.max(1, currentPage - Math.floor(maxPagesToShow / 2));
+      const endPage = Math.min(paginationData.total_pages, startPage + maxPagesToShow - 1);
+      startPage = Math.max(1, endPage - maxPagesToShow + 1);
+
+      if (startPage > 1) {
+        ul.insertAdjacentHTML("beforeend", `<li class="page-item"><a class="page-link" href="#" onclick="irParaPagina(1); return false;">1</a></li>`);
+        if (startPage > 2) ul.insertAdjacentHTML("beforeend", `<li class="page-item disabled"><a class="page-link">...</a></li>`);
+      }
+
+      for (let i = startPage; i <= endPage; i++) {
+        ul.insertAdjacentHTML("beforeend", `<li class="page-item ${i === currentPage ? "active" : ""}"><a class="page-link" href="#" onclick="irParaPagina(${i}); return false;">${i}</a></li>`);
+      }
+
+      if (endPage < paginationData.total_pages) {
+        if (endPage < paginationData.total_pages - 1) ul.insertAdjacentHTML("beforeend", `<li class="page-item disabled"><a class="page-link">...</a></li>`);
+        ul.insertAdjacentHTML("beforeend", `<li class="page-item"><a class="page-link" href="#" onclick="irParaPagina(${paginationData.total_pages}); return false;">${paginationData.total_pages}</a></li>`);
+      }
+
+      // próximo
+      const next = document.createElement("li");
+      next.className = `page-item ${paginationData.next === null ? "disabled" : ""}`;
+      next.innerHTML = `<a class="page-link" href="#" aria-label="Próximo"${paginationData.next !== null ? ` onclick="irParaPagina(${paginationData.next}); return false;"` : ""}><i class="bi bi-chevron-right"></i></a>`;
+      ul.appendChild(next);
+
+      const inicio = (currentPage - 1) * paginationData.page_size + 1;
+      const fim = Math.min(currentPage * paginationData.page_size, paginationData.count);
+      info.textContent = `Mostrando ${inicio}-${fim} de ${paginationData.count} inscritos`;
+    }
+
+    // Carga principal
+    async function carregarInscritos(page = 1, pageSize = 10) {
+      const tabela = document.getElementById("inscritos-list");
+      const urlParams = new URLSearchParams(window.location.search);
+      const vagaId = urlParams.get("vaga");
+
+      if (!vagaId) {
+        showStatus("Parâmetro inválido na URL.");
+        return;
+      }
+
+      clearStatus();
+      tabela.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-muted">Carregando inscritos...</td></tr>`;
+
+      try {
+        let resp = await fetchComToken(`/backend/editais/validar/vaga/${vagaId}/?page=${page}&page_size=${pageSize}`, {
+          method: "GET",
+          credentials: "include",
+        });
+
+        if (resp.status === 401) {
+          await refreshAccessToken();
+          resp = await fetchComToken(`/backend/editais/validar/vaga/${vagaId}/?page=${page}&page_size=${pageSize}`, {
+            method: "GET",
+            credentials: "include",
+          });
+        }
+
+        if (!resp.ok) {
+          const err = await resp.json().catch(() => ({}));
+          throw new Error(err.detail || "Erro ao buscar inscritos.");
+        }
+
+        const vaga = await resp.json();
+        maximoDePontos = vaga.maximo_de_pontos;
+        document.getElementById("titulo-vaga").innerHTML =
+          `<i class="bi bi-file-earmark-check me-2"></i>Validação de Documentos — ${vaga.descricao || ""}`;
+
+        inscritos = Array.isArray(vaga.inscritos) ? vaga.inscritos : [];
+        paginationData = vaga.pagination || { page: page, page_size: pageSize, count: inscritos.length, previous: null, next: null, total_pages: 1 };
+        currentPage = paginationData.page;
+
+        document.getElementById("page-size-select").value = paginationData.page_size;
+        tabela.innerHTML = "";
+
+        if (inscritos.length === 0) {
+          tabela.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-muted">Nenhum inscrito disponível.</td></tr>`;
+          renderizarControlesPaginacao();
+          return;
+        }
+
+        for (const inscrito of inscritos) {
+          // documentos do inscrito
+          const docsHTML = (inscrito.uploads || []).map((doc) => {
+            const tipo = doc.fields.tipo; // ex: 'checkbox', 'combobox', 'datebox'
+            const id = doc.pk;
+            const fullId = `${tipo}-${id}`;
+            const checked = doc.fields?.validado ? "checked" : "";
+            const pMax = doc.fields.pontuacao_do_campo ?? doc.fields.pontuacao_maxima ?? 0;
+            const showPontuacao = pMax > 0;
+            const pAtual = doc.fields.pontuacao_obtida ?? "";
+
+            let label = (doc.fields.descricao || "-").trim();
+            label = label.replace(/\n/g, "<br />");
+
+            let campoArquivo = "";
+            if (doc.fields.caminho_arquivo) {
+              campoArquivo = `<a href="#" onclick="baixarArquivoComToken('${doc.fields.caminho_arquivo}', ${inscrito.cm_pessoa.id}); return false;">${label}</a>`;
+            } else {
+              let periodo = "";
+              if (doc.fields.inicio && doc.fields.fim) {
+                periodo = ` (${doc.fields.inicio} até ${doc.fields.fim})`;
+              }
+              campoArquivo = (label + periodo).replace(/\n/g, "<br />");
+            }
+
+            return `
+              <div class="mb-2">
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                  <input type="checkbox" id="doc-${fullId}" name="arquivo_valido" value="${fullId}" ${checked}>
+                  <label for="doc-${fullId}" class="m-0">${campoArquivo}</label>
+                  ${showPontuacao
+                ? `<input type="number" id="pontuacao-${fullId}" value="${pAtual}" class="form-control form-control-sm" style="width:100px" min="0" max="${pMax}" step="0.01" oninput="validarPontuacaoInput(this, ${pMax})">`
+                : ""}
+                </div>
+              </div>
+            `;
+          }).join("");
+
+          const validadorTexto = await buscarValidador(vagaId, inscrito.cm_pessoa.id);
+
+          const row = `
+            <tr>
+              <td>
+                <div class="fw-semibold">${inscrito.cm_pessoa.nome}</div>
+                <div class="text-muted small">${inscrito.cm_pessoa.cpf}</div>
+              </td>
+              <td>${docsHTML}</td>
+              <td>
+                <textarea id="justificativa-${inscrito.cm_pessoa.id}" class="form-control" rows="3"
+                  placeholder="Deixe em branco se não deseja justificar">${inscrito.justificativa || ""}</textarea>
+              </td>
+              <td class="text-end">
+                <button class="btn btn-danger btn-sm" onclick="validarPontuacao(${inscrito.cm_pessoa.id})">
+                  <i class="bi bi-check-circle me-1"></i> Validar
+                </button>
+              </td>
+            </tr>
+            <tr>
+              <td colspan="4" class="py-2">
+                <div id="validador-${inscrito.cm_pessoa.id}" class="small text-muted">${validadorTexto}</div>
+                <div id="error-message-${inscrito.cm_pessoa.id}" class="small text-danger mt-1"></div>
+              </td>
+            </tr>
+          `;
+          tabela.insertAdjacentHTML("beforeend", row);
+        }
+
+        renderizarControlesPaginacao();
+      } catch (e) {
+        showStatus(e.message || "Falha ao carregar inscritos.");
+        tabela.innerHTML = `<tr><td colspan="4" class="text-center text-danger">Erro ao carregar inscritos.</td></tr>`;
+      }
+    }
+
+    function validarPontuacaoInput(input, maxPontos) {
+      let value = parseFloat(input.value);
+      if (isNaN(value)) { input.value = ""; return; }
+      if (value < 0) input.value = 0;
+      if (value > maxPontos) input.value = maxPontos;
+    }
+
+    function coletarDadosValidacao(inscrito) {
+      const arquivosValidos = [];
+      const pontuacoesDocumentos = {};
+      let error = null;
+
+      for (const doc of (inscrito.uploads || [])) {
+        const tipo = doc.fields.tipo;
+        const id = doc.pk;
+        const fullId = `${tipo}-${id}`;
+
+        const checkbox = document.querySelector(`input[name="arquivo_valido"][value="${fullId}"]`);
+        if (checkbox?.checked) arquivosValidos.push(fullId);
+
+        const pInput = document.getElementById(`pontuacao-${fullId}`);
+        if (pInput) {
+          const p = parseFloat(pInput.value) || 0;
+          const pMax = doc.fields.pontuacao_do_campo ?? doc.fields.pontuacao_maxima ?? 0;
+          if (p > pMax) {
+            error = `Pontuação do documento "${doc.fields.descricao}" (${p}) excede o máximo (${pMax}).`;
+            break;
+          }
+          pontuacoesDocumentos[fullId] = p;
+        }
+      }
+
+      return { arquivosValidos, pontuacoesDocumentos, error };
+    }
+
+    async function validarPontuacao(inscritoId) {
+      const urlParams = new URLSearchParams(window.location.search);
+      const vagaId = urlParams.get("vaga");
+      if (!vagaId) return showStatus("ID da vaga não encontrado na URL.");
+
+      const inscrito = inscritos.find(i => i.cm_pessoa.id === inscritoId);
+      const candError = document.getElementById(`error-message-${inscritoId}`);
+      if (!inscrito) { if (candError) candError.textContent = "Inscrito não encontrado."; return; }
+
+      const { arquivosValidos, pontuacoesDocumentos, error } = coletarDadosValidacao(inscrito);
+      if (error) { if (candError) candError.textContent = error; return; }
+
+      const justificativa = (document.getElementById(`justificativa-${inscritoId}`)?.value || "").trim();
+      if (candError) candError.textContent = "";
+      clearStatus();
+
+      try {
+        let resp = await fetchComToken(`/backend/editais/validar/vaga/${vagaId}/`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            inscrito_id: inscritoId,
+            justificativa: justificativa,
+            arquivo_valido: arquivosValidos,
+            pontuacoes_documentos: pontuacoesDocumentos,
+          }),
+        });
+
+        if (resp.status === 401) {
+          await refreshAccessToken();
+          resp = await fetchComToken(`/backend/editais/validar/vaga/${vagaId}/`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({
+              inscrito_id: inscritoId,
+              justificativa: justificativa,
+              arquivo_valido: arquivosValidos,
+              pontuacoes_documentos: pontuacoesDocumentos,
+            }),
+          });
+        }
+
+        const data = await resp.json().catch(() => ({}));
+        if (!resp.ok) throw new Error(data.detail || "Erro ao validar documentos.");
+
+        // atualiza linha do validador
+        const alvo = document.getElementById(`validador-${inscritoId}`);
+        if (alvo) {
+          const novoValidador = await buscarValidador(vagaId, inscritoId);
+          alvo.textContent = novoValidador;
+        }
+
+        showStatus("Validação realizada com sucesso!", "success");
+        setTimeout(() => clearStatus(), 3000);
+      } catch (e) {
+        if (candError) candError.textContent = e.message || "Falha ao validar.";
+        else showStatus(e.message || "Falha ao validar.");
+      }
+    }
+
+    async function buscarValidador(vagaId, pessoaId) {
+      try {
+        let resp = await fetchComToken(`/backend/editais/validar/verifica_validacao/${vagaId}/${pessoaId}/`, {
+          method: "GET",
+          credentials: "include",
+        });
+
+        if (resp.status === 401) {
+          await refreshAccessToken();
+          resp = await fetchComToken(`/backend/editais/validar/verifica_validacao/${vagaId}/${pessoaId}/`, {
+            method: "GET",
+            credentials: "include",
+          });
+        }
+
+        if (!resp.ok) return "-";
+        const data = await resp.json();
+        const pontos = (data.pontuacao ?? 0).toString().replace(".", ",");
+        return `${data.nome_responsavel_validacao} atribuiu ${pontos} pontos em ${data.data}`;
+      } catch {
+        return "Erro ao buscar o validador";
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      const token = localStorage.getItem("token");
+      if (!token) return logout();
+
+      const params = new URLSearchParams(window.location.search);
+      const initialPage = parseInt(params.get("page")) || 1;
+      const initialSize = parseInt(params.get("page_size")) || 10;
+      document.getElementById("page-size-select").value = initialSize;
+
+      await carregarInscritos(initialPage, initialSize);
+    });
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Seleção de Período da Transmissão</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" />
+  <link rel="stylesheet" href="../extra/css/principal.css" />
+</head>
+
+<body class="bg-light py-4">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+        <div class="card shadow-sm border-0 p-4">
+          <h2 class="mb-4 text-center">
+            <i class="bi bi-calendar-range me-2 text-primary"></i>
+            Selecione o Período da Transmissão
+          </h2>
+
+          <div id="selecao-container">
+            <div class="mb-3">
+              <label for="inicio" class="form-label fw-semibold">Data de Início</label>
+              <select id="inicio" class="form-select" disabled aria-label="Selecione a data de início">
+                <option>Carregando datas...</option>
+              </select>
+            </div>
+
+            <div class="mb-4">
+              <label for="fim" class="form-label fw-semibold">Data de Fim</label>
+              <select id="fim" class="form-select" disabled aria-label="Selecione a data de fim">
+                <option>Selecione a data de início primeiro</option>
+              </select>
+              <div class="form-text">Mostramos apenas datas finais válidas para o início escolhido.</div>
+            </div>
+
+            <div class="d-grid">
+              <button class="btn btn-danger" onclick="confirmar()" disabled id="btn-confirmar">
+                <span class="spinner-border spinner-border-sm me-2 d-none" role="status" aria-hidden="true"></span>
+                <span>Confirmar período</span>
+              </button>
+            </div>
+          </div>
+
+          <div id="mensagem" class="mt-3 d-none" role="alert"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../extra/js/logout.js"></script>
+  <script src="../extra/js/fetchComToken.js"></script>
+  <script src="../extra/js/refreshAccessToken.js"></script>
+  <script>
+    let datasDisponiveis = [];
+    const inicioSelect = document.getElementById("inicio");
+    const fimSelect = document.getElementById("fim");
+    const confirmarBtn = document.getElementById("btn-confirmar");
+    const mensagem = document.getElementById("mensagem");
+    const selecaoContainer = document.getElementById("selecao-container");
+
+    function showMsg(texto, tipo = "danger") {
+      mensagem.className = `mt-3 alert alert-${tipo}`;
+      mensagem.textContent = texto;
+      mensagem.classList.remove("d-none");
+    }
+    function hideMsg() {
+      mensagem.classList.add("d-none");
+      mensagem.textContent = "";
+    }
+    function esconderSelecao() {
+      selecaoContainer.classList.add("d-none");
+    }
+    function mostrarSelecao() {
+      selecaoContainer.classList.remove("d-none");
+    }
+
+    function formatarData(iso) {
+      const [ano, mes, dia] = iso.split("-");
+      return `${dia}/${mes}/${ano}`;
+    }
+
+    function setLoadingButton(btn, loading) {
+      const spinner = btn.querySelector(".spinner-border");
+      const label = btn.querySelector("span:last-child");
+      if (loading) {
+        btn.disabled = true;
+        spinner.classList.remove("d-none");
+        label.textContent = "Processando...";
+      } else {
+        spinner.classList.add("d-none");
+        btn.disabled = false;
+        label.textContent = "Confirmar período";
+      }
+    }
+
+    async function carregarDatas() {
+      hideMsg();
+      mostrarSelecao();
+      confirmarBtn.disabled = true;
+      fimSelect.disabled = true;
+      inicioSelect.disabled = true;
+      inicioSelect.innerHTML = `<option>Carregando datas...</option>`;
+      fimSelect.innerHTML = `<option>Selecione a data de início primeiro</option>`;
+
+      try {
+        let res = await fetchComToken("/backend/transmissao/datas_disponiveis/");
+        if (res.status === 401) {
+          await refreshAccessToken();
+          return carregarDatas();
+        }
+        if (res.status === 403) {
+          esconderSelecao();
+          showMsg("Acesso não autorizado.", "danger");
+          return;
+        }
+
+        const payload = await res.json();
+        const lista = payload?.datas_disponiveis || [];
+        if (!res.ok || !lista.length) {
+          esconderSelecao();
+          showMsg(payload.detail || "Nenhuma data disponível.", "warning");
+          return;
+        }
+
+        datasDisponiveis = lista;
+        // Popular início
+        inicioSelect.innerHTML = "";
+        const ph = document.createElement("option");
+        ph.value = "";
+        ph.textContent = "Selecione a data de início...";
+        ph.disabled = true; ph.selected = true;
+        inicioSelect.appendChild(ph);
+
+        datasDisponiveis.forEach((d) => {
+          const opt = document.createElement("option");
+          opt.value = d;
+          opt.textContent = formatarData(d);
+          inicioSelect.appendChild(opt);
+        });
+
+        inicioSelect.disabled = false;
+      } catch (err) {
+        console.error(err);
+        esconderSelecao();
+        showMsg("Erro ao carregar datas.", "danger");
+      }
+    }
+
+    async function carregarFinsValidos(inicioSelecionado) {
+      hideMsg();
+      fimSelect.disabled = true;
+      confirmarBtn.disabled = true;
+      fimSelect.innerHTML = `<option>Carregando datas de fim...</option>`;
+
+      try {
+        const res = await fetchComToken(`/backend/transmissao/datas_disponiveis_fim_validas/?inicio=${inicioSelecionado}`);
+        if (res.status === 401) {
+          await refreshAccessToken();
+          return carregarFinsValidos(inicioSelecionado);
+        }
+        if (res.status === 403) {
+          esconderSelecao();
+          showMsg("Acesso não autorizado.", "danger");
+          return;
+        }
+
+        const dados = await res.json();
+        const fins = dados?.datas_fim_validas || [];
+        if (!res.ok || !fins.length) {
+          esconderSelecao();
+          showMsg(dados.detail || "Nenhuma data final válida.", "warning");
+          return;
+        }
+
+        fimSelect.innerHTML = "";
+        const ph = document.createElement("option");
+        ph.value = "";
+        ph.textContent = "Selecione a data de fim...";
+        ph.disabled = true; ph.selected = true;
+        fimSelect.appendChild(ph);
+
+        fins.forEach((d) => {
+          const opt = document.createElement("option");
+          opt.value = d;
+          opt.textContent = formatarData(d);
+          fimSelect.appendChild(opt);
+        });
+
+        fimSelect.disabled = false;
+        confirmarBtn.disabled = false;
+      } catch (err) {
+        console.error("Erro ao carregar datas de fim:", err);
+        esconderSelecao();
+        showMsg("Erro ao carregar datas de fim.", "danger");
+      }
+    }
+
+    inicioSelect.addEventListener("change", (e) => {
+      const inicioVal = e.target.value;
+      if (!inicioVal) {
+        fimSelect.innerHTML = `<option>Selecione a data de início primeiro</option>`;
+        fimSelect.disabled = true;
+        confirmarBtn.disabled = true;
+        return;
+      }
+      carregarFinsValidos(inicioVal);
+    });
+
+    async function confirmar() {
+      hideMsg();
+      const inicio = inicioSelect.value;
+      const fim = fimSelect.value;
+
+      if (!inicio || !fim || fim < inicio) {
+        showMsg("Selecione um período válido.", "warning");
+        return;
+      }
+
+      setLoadingButton(confirmarBtn, true);
+      try {
+        let res = await fetchComToken("/backend/transmissao/datas_disponiveis/", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ inicio, fim }),
+        });
+        if (res.status === 401) {
+          await refreshAccessToken();
+          return confirmar();
+        }
+        if (res.status === 403) {
+          showMsg("Acesso não autorizado para registrar o período.", "danger");
+          return;
+        }
+        const data = await res.json().catch(() => ({}));
+        if (res.ok) {
+          window.location.href = "horarios_disponiveis.html";
+        } else {
+          showMsg(data.detail || "Erro ao registrar período.", "danger");
+        }
+      } catch (err) {
+        console.error(err);
+        showMsg("Erro de rede ao registrar.", "danger");
+      } finally {
+        setLoadingButton(confirmarBtn, false);
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        logout();
+      } else {
+        await carregarDatas();
+      }
+    });
+  </script>
+</body>
+
+</html>

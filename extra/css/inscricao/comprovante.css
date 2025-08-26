@@ -1,0 +1,29 @@
+body {
+    font-family: Arial, sans-serif;
+}
+
+.comprovante {
+    border: 1px solid #ddd;
+    padding: 20px;
+    border-radius: 5px;
+    background: #fff;
+}
+
+#assinatura-digital {
+    word-break: break-word;
+    font-size: 12px;
+    text-align: center;
+    padding: 10px;
+    border: 1px solid #000;
+    display: inline-block;
+    max-width: 100%;
+    overflow-wrap: break-word;
+}
+
+@media print {
+    #btn-imprimir,
+    #btn-voltar,
+    .logo-fundo {
+        display: none !important;
+    }
+}
