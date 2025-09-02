@@ -126,7 +126,7 @@
             <td>${vaga.descricao ?? "-"}</td>
             <td class="text-center">${vaga.quantidade ?? "-"}</td>
             <td class="text-end">
-              <button class="btn btn-danger btn-sm" onclick="baixarCSVVaga(${vaga.id}, ${JSON.stringify(vaga.descricao || '')})">
+              <button class="btn btn-danger btn-sm" onclick="baixarCSVVaga(${vaga.id}, '${(vaga.descricao || '').replace(/'/g, "\\'")}')">
                 <i class="bi bi-download me-1"></i> CSV
               </button>
             </td>
