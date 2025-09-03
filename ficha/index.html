@@ -84,7 +84,7 @@
 
       const codigo = getQueryParam("codigo");
       if (!codigo) {
-        showAlert("Código não encontrado na URL.", "danger");
+        showAlert("O código de acesso não está presente. Solicite ao CEAD o envio do link correto.", "danger");
         return;
       }
 
