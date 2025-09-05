@@ -123,7 +123,8 @@
       <div class="row g-3">
         <div class="col-md-6">
           <label for="codigo_banco" class="form-label">Código do Banco</label>
-          <input type="text" id="codigo_banco" class="form-control" required />
+          <input type="text" id="codigo_banco" name="codigo_banco" class="form-control" inputmode="numeric"
+            pattern="[0-9]{3}" maxlength="3" required />
           <div class="invalid-feedback">Informe o código do banco</div>
         </div>
         <div class="col-md-6">
@@ -132,17 +133,20 @@
         </div>
         <div class="col-md-6">
           <label for="agencia" class="form-label">Agência</label>
-          <input type="text" id="agencia" class="form-control" required />
+          <input type="text" id="agencia" name="agencia" class="form-control" inputmode="numeric" pattern="[0-9]{1,6}"
+            maxlength="6" required />
           <div class="invalid-feedback">Informe a agência</div>
         </div>
         <div class="col-md-6">
           <label for="conta" class="form-label">Conta</label>
-          <input type="text" id="conta" class="form-control" required />
+          <input type="text" id="conta" name="conta" class="form-control" inputmode="numeric" pattern="[0-9]+"
+            maxlength="12" required />
           <div class="invalid-feedback">Informe o número da conta</div>
         </div>
         <div class="col-md-6">
           <label for="digito" class="form-label">Dígito</label>
-          <input type="text" id="digito" class="form-control" required maxlength="1" />
+          <input type="text" id="digito" name="digito" class="form-control" inputmode="numeric" pattern="[0-9Xx]{1}"
+            maxlength="1" required />
           <div class="invalid-feedback">Informe o dígito verificador</div>
         </div>
       </div>
@@ -161,8 +165,6 @@
       $("#cep").mask("00000-000");
       $("#ddd1, #ddd2").mask("00");
       $("#telefone1, #telefone2").mask("00000-0000");
-      $("#agencia").mask("0000");
-      $("#conta").mask("0000000");
     });
 
     // === Helpers UI / Erros ====================================================
@@ -429,7 +431,8 @@
           cep: document.getElementById("cep").value.replace(/\D/g, ""),
           logradouro: document.getElementById("logradouro").value,
           numero: document.getElementById("numero").value,
-          complemento: (document.getElementById("sem_complemento")?.checked ? "" : document.getElementById("complemento").value),
+          complemento: (document.getElementById("sem_complemento")?.checked ? "" :
+            document.getElementById("complemento").value),
           bairro: document.getElementById("bairro").value,
           cm_municipio: {
             municipio: document.getElementById("municipio").value,
