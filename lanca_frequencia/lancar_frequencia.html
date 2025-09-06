@@ -5,7 +5,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Lançar Frequência</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" />
   <link rel="stylesheet" href="../extra/css/principal.css" />
 </head>
@@ -153,17 +153,19 @@
       );
 
       try {
-        const response = await fetchComToken("/backend/lanca_frequencia/", {
+        const response = await fetchComToken("/backend/lanca_frequencia/previa/", {
           method: "POST",
           body: JSON.stringify({ bolsistas: bolsistasData }),
         });
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.error || "Erro ao lançar frequência");
+          throw new Error(errorData.detail || "Erro ao gerar prévia da frequência");
         }
 
-        window.location.href = "relatorio.html";
+        const data = await response.json();
+        sessionStorage.setItem("preview-frequencia", JSON.stringify(data));
+        window.location.href = "confirmacao.html";
       } catch (error) {
         errorMessageBottom.textContent = `Erro: ${error.message}`;
         errorMessageBottom.classList.remove("d-none");
