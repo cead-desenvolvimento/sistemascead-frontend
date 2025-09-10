@@ -104,19 +104,6 @@
         return;
       }
 
-      // Admin badge
-      fetchComToken("/backend/autenticacao/is-admin", {
-        method: "GET",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        credentials: "include",
-      })
-        .then((response) => response.ok ? response.json() : Promise.resolve({ is_staff: false }))
-        .then((data) => {
-          const adminButton = document.getElementById("admin-menu");
-          data.is_staff ? adminButton?.classList.remove("d-none") : adminButton?.classList.add("d-none");
-        })
-        .catch(() => { });
-
       const container = document.getElementById("uris-container");
 
       try {
@@ -141,55 +128,62 @@
           throw new Error(errorData.detail || "Erro ao obter URIs");
         }
 
-        const uris = await response.json();
+        const data = await response.json();
+
+        // Atualiza botão admin
+        const adminButton = document.getElementById("admin-menu");
+        data.is_staff ? adminButton?.classList.remove("d-none") : adminButton?.classList.add("d-none");
+
+        // Atualiza contador e lista
+        const uris = data.uris || [];
         document.getElementById("countBadge").textContent = uris.length;
 
         if (!uris.length) {
           container.innerHTML = `
-            <div class="col-12">
-              <div class="empty-state text-center p-5">
-                <i class="bi bi-inboxes display-5 d-block mb-3 text-secondary"></i>
-                <h5 class="mb-1">Nenhum acesso disponível</h5>
-              </div>
-            </div>`;
+          <div class="col-12">
+            <div class="empty-state text-center p-5">
+              <i class="bi bi-inboxes display-5 d-block mb-3 text-secondary"></i>
+              <h5 class="mb-1">Nenhum acesso disponível</h5>
+            </div>
+          </div>`;
           return;
         }
 
         container.innerHTML = uris.map((uri) => `
-          <div class="col-sm-6 col-lg-4" data-uri-card data-search="${(uri.descricao || '')} ${(uri.uri || '')}">
-            <div class="card h-100 shadow-none card-uri">
-              <div class="card-body d-flex flex-column">
-                <div class="d-flex align-items-start justify-content-between gap-2">
-                  <h5 class="card-title mb-2">
-                    <i class="bi bi-link-45deg me-2 text-primary"></i>
-                    ${(uri.descricao || uri.uri)}
-                  </h5>
-                </div>
-                <p class="text-secondary small mb-3">
-                  <span class="uri-path"> ${(uri.uri)} </span>
-                </p>
-                <div class="mt-auto">
-                  <a href="${uri.uri}" class="btn btn-primary w-100">
-                    Abrir
-                  </a>
-                </div>
+        <div class="col-sm-6 col-lg-4" data-uri-card data-search="${(uri.descricao || '')} ${(uri.uri || '')}">
+          <div class="card h-100 shadow-none card-uri">
+            <div class="card-body d-flex flex-column">
+              <div class="d-flex align-items-start justify-content-between gap-2">
+                <h5 class="card-title mb-2">
+                  <i class="bi bi-link-45deg me-2 text-primary"></i>
+                  ${(uri.descricao || uri.uri)}
+                </h5>
+              </div>
+              <p class="text-secondary small mb-3">
+                <span class="uri-path"> ${(uri.uri)} </span>
+              </p>
+              <div class="mt-auto">
+                <a href="${uri.uri}" class="btn btn-primary w-100">
+                  Abrir
+                </a>
               </div>
             </div>
           </div>
-        `).join("");
+        </div>
+      `).join("");
 
         applyFilter();
       } catch (error) {
         container.innerHTML = `
-          <div class="col-12">
-            <div class="alert alert-danger d-flex align-items-start" role="alert">
-              <i class="bi bi-x-octagon me-2 mt-1"></i>
-              <div>
-                <strong>Falha ao carregar acessos.</strong><br/>
-                <span class="small">${error.message}</span>
-              </div>
+        <div class="col-12">
+          <div class="alert alert-danger d-flex align-items-start" role="alert">
+            <i class="bi bi-x-octagon me-2 mt-1"></i>
+            <div>
+              <strong>Falha ao carregar acessos.</strong><br/>
+              <span class="small">${error.message}</span>
             </div>
-          </div>`;
+          </div>
+        </div>`;
       }
     });
   </script>
