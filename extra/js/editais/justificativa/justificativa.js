@@ -11,8 +11,7 @@
     const btnText = $("#btn-text");
     const btnReload = $("#btn-recarregar");
     const params = new URLSearchParams(window.location.search);
-    const ano = params.get("ano");
-    const numero = params.get("numero");
+    const id = params.get("id");
 
     function showStatus(msg, type = "danger") {
         statusBox.className = `alert alert-${type}`;
@@ -49,20 +48,16 @@
 
     // UI inicial
     (function init() {
-        // Subtítulo do edital
         const info = $("#edital-info");
-        if (ano && numero) {
-            info.textContent = `Edital ${numero}/${ano}`;
-        } else {
+        if (!id) {
             info.textContent = "";
             showStatus(
-                `<i class="bi bi-exclamation-triangle-fill me-2"></i>Parâmetros do edital ausentes na URL.`,
+                `<i class="bi bi-exclamation-triangle-fill me-2"></i>Parâmetro do edital ausente na URL.`,
                 "danger"
             );
             form.classList.add("d-none");
         }
 
-        // Máscara e foco no CPF
         inputCPF.addEventListener(
             "input",
             () => {
@@ -105,9 +100,9 @@
             inputCPF.focus();
             return;
         }
-        if (!ano || !numero) {
+        if (!id) {
             showStatus(
-                `<i class="bi bi-exclamation-triangle-fill me-2"></i>Parâmetros do edital ausentes na URL.`,
+                `<i class="bi bi-exclamation-triangle-fill me-2"></i>Parâmetro do edital ausente na URL.`,
                 "danger"
             );
             return;
@@ -116,9 +111,7 @@
         toggleLoading(true);
         try {
             const resp = await fetch(
-                `/backend/editais/${encodeURIComponent(
-                    ano
-                )}/${encodeURIComponent(numero)}/justificativa/`,
+                `/backend/editais/${encodeURIComponent(id)}/justificativa/`,
                 {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },

@@ -14,7 +14,6 @@
 <body>
   <div class="container py-5">
 
-    <!-- Cabeçalho -->
     <div class="row mb-4 align-items-center">
       <div class="col">
         <h1 class="h2 mb-1" id="titulo-edital">
@@ -32,10 +31,8 @@
       </div>
     </div>
 
-    <!-- Alert -->
     <div id="status" class="alert d-none" role="alert"></div>
 
-    <!-- Tabela -->
     <div class="table-responsive shadow-sm">
       <table class="table table-hover align-middle mb-0">
         <thead class="table-light">
@@ -55,7 +52,6 @@
 
   </div>
 
-  <!-- Scripts -->
   <script src="../../extra/js/logout.js"></script>
   <script src="../../extra/js/fetchComToken.js"></script>
   <script src="../../extra/js/refreshAccessToken.js"></script>
@@ -72,31 +68,23 @@
       el.textContent = "";
     }
 
-    function setSubtitulo(ano, numero) {
-      const el = document.getElementById("subtitulo-edital");
-      if (ano && numero) el.textContent = `Edital ${numero}/${ano}`;
-      else el.textContent = "";
-    }
-
     async function carregarVagas() {
       const params = new URLSearchParams(window.location.search);
-      const ano = params.get("ano");
-      const numero = params.get("numero");
+      const id = params.get("id");
       const tbody = document.getElementById("vagas-list");
 
-      if (!ano || !numero) {
-        showStatus("Parâmetros inválidos na URL (informe 'ano' e 'numero').");
+      if (!id) {
+        showStatus("Parâmetro inválido na URL (informe 'id').");
         return;
       }
 
       document.getElementById("titulo-edital").innerHTML =
         `<i class="bi bi-briefcase me-2"></i>Vagas do Edital`;
-      setSubtitulo(ano, numero);
+      document.getElementById("subtitulo-edital").textContent = "";
 
       clearStatus();
       tbody.innerHTML = `<tr><td colspan="3" class="text-center py-4 text-muted">Carregando vagas...</td></tr>`;
-
-      const url = `/backend/editais/enviar_mensagem/${encodeURIComponent(ano)}/${encodeURIComponent(numero)}/`;
+      const url = `/backend/editais/enviar_mensagem/${encodeURIComponent(id)}/`;
 
       try {
         let resp = await fetchComToken(url, { method: "GET", credentials: "include" });

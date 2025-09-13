@@ -27,32 +27,19 @@
     }
 
     function criarItem(edital) {
-        // <a href="justificativa.html?ano=YYYY&numero=NNN">NNN/YYYY — descrição</a>
         const a = document.createElement("a");
         a.className = "edital-link";
         a.setAttribute("role", "listitem");
 
-        const ano = edital?.ano ?? "";
-        const numero = edital?.numero ?? "";
-        a.href = `justificativa.html?ano=${encodeURIComponent(
-            ano
-        )}&numero=${encodeURIComponent(numero)}`;
-
-        const strong = document.createElement("strong");
-        strong.textContent = `${numero}/${ano}`;
-
-        const sep = document.createTextNode(" — ");
-
-        const spanDesc = document.createElement("span");
-        spanDesc.textContent = edital?.descricao ?? "";
+        a.href = `justificativa.html?id=${encodeURIComponent(edital.id)}`;
 
         const icon = document.createElement("i");
         icon.className = "bi bi-arrow-right-circle me-2";
         a.prepend(icon);
 
-        a.appendChild(strong);
-        a.appendChild(sep);
-        a.appendChild(spanDesc);
+        const textNode = document.createTextNode(edital.edital_str ?? "");
+        a.appendChild(textNode);
+
         return a;
     }
 
@@ -64,7 +51,6 @@
             });
             if (!resp.ok) throw new Error("Erro ao carregar editais.");
 
-            // alguns backends podem retornar 204 (sem conteúdo)
             const texto = await resp.text();
             const data = texto ? JSON.parse(texto) : [];
 

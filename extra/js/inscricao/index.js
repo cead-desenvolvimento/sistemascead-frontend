@@ -9,7 +9,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // estado
     let etapa = "editais"; // "editais" | "vagas"
-    let editalAtual = { ano: null, numero: null };
+    let editalAtual = { id: null, titulo: "" };
 
     // helpers
     function showStatus(msg, type = "danger") {
@@ -32,7 +32,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     function resetToEditais() {
         etapa = "editais";
-        editalAtual = { ano: null, numero: null };
+        editalAtual = { id: null, titulo: "" };
         elSubtitulo.textContent = "";
         btnVoltar.classList.add("d-none");
         carregarEditais();
@@ -53,20 +53,15 @@ document.addEventListener("DOMContentLoaded", () => {
     // editais
     function renderItemEdital(ed) {
         const a = document.createElement("a");
+
         a.className = "edital-link";
         a.setAttribute("role", "listitem");
-
-        const strong = document.createElement("strong");
-        strong.textContent = `${ed.numero}/${ed.ano}`;
-        const sep = document.createTextNode(" — ");
-        const span = document.createElement("span");
-        span.textContent = ed.descricao ?? "";
-
-        a.append(strong, sep, span);
+        a.textContent = ed.edital_str ?? "";
         a.href = "#";
+
         a.addEventListener("click", (e) => {
             e.preventDefault();
-            carregarVagas(ed.ano, ed.numero);
+            carregarVagas(ed.id, ed.edital_str);
         });
         return a;
     }
@@ -91,13 +86,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 return;
             }
 
-            // ordenar por ano desc, depois número desc
-            data.sort(
-                (a, b) =>
-                    (b.ano ?? 0) - (a.ano ?? 0) ||
-                    (b.numero ?? 0) - (a.numero ?? 0)
-            );
-
             for (const ed of data) {
                 elLista.appendChild(renderItemEdital(ed));
             }
@@ -109,40 +97,16 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // vagas
-    function renderItemVaga(v) {
-        const a = document.createElement("a");
-        a.className = "vaga-link";
-        a.setAttribute("role", "listitem");
-
-        const qtd =
-            v.quantidade != null
-                ? v.quantidade === 1
-                    ? "1 vaga"
-                    : `${v.quantidade} vagas`
-                : null;
-        const titulo = [v.descricao ?? "-", qtd].filter(Boolean).join(" — ");
-        a.textContent = titulo;
-
-        a.href = "#";
-        a.addEventListener("click", (e) => {
-            e.preventDefault();
-            registrarVaga(v.id, editalAtual.ano, editalAtual.numero);
-        });
-        return a;
-    }
-
-    async function carregarVagas(ano, numero) {
+    async function carregarVagas(editalId, editalTitulo) {
         etapa = "vagas";
-        editalAtual = { ano, numero };
-        elSubtitulo.textContent = `Edital ${numero}/${ano} — escolha uma vaga`;
+        editalAtual = { id: editalId, titulo: editalTitulo };
+        elSubtitulo.textContent = `${editalTitulo} — escolha uma vaga`;
         btnVoltar.classList.remove("d-none");
         setLoading("Carregando vagas…");
 
         try {
             const resp = await fetch(
-                `/backend/inscricao/edital/${encodeURIComponent(
-                    ano
-                )}/${encodeURIComponent(numero)}/`,
+                `/backend/inscricao/edital/${encodeURIComponent(editalId)}/`,
                 {
                     method: "GET",
                     credentials: "include",
@@ -170,14 +134,36 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
+    function renderItemVaga(v) {
+        const a = document.createElement("a");
+        a.className = "vaga-link";
+        a.setAttribute("role", "listitem");
+
+        const qtd =
+            v.quantidade != null
+                ? v.quantidade === 1
+                    ? "1 vaga"
+                    : `${v.quantidade} vagas`
+                : null;
+        const titulo = [v.descricao ?? "-", qtd].filter(Boolean).join(" — ");
+        a.textContent = titulo;
+
+        a.href = "#";
+        a.addEventListener("click", (e) => {
+            e.preventDefault();
+            registrarVaga(v.id);
+        });
+        return a;
+    }
+
     // registrar vaga
-    async function registrarVaga(vagaId, ano, numero) {
+    async function registrarVaga(vagaId) {
         clearStatus();
         try {
             const resp = await fetch(
                 `/backend/inscricao/edital/${encodeURIComponent(
-                    ano
-                )}/${encodeURIComponent(numero)}/`,
+                    editalAtual.id
+                )}/`,
                 {
                     method: "POST",
                     headers: authHeaders(true),
@@ -197,7 +183,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // eventos
     btnReload.addEventListener("click", () => {
         if (etapa === "editais") carregarEditais();
-        else carregarVagas(editalAtual.ano, editalAtual.numero);
+        else carregarVagas(editalAtual.id, editalAtual.titulo);
     });
     btnVoltar.addEventListener("click", resetToEditais);
 

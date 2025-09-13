@@ -83,21 +83,16 @@
     async function carregarVagas() {
       const tbody = document.getElementById("vagas-list");
       const params = new URLSearchParams(window.location.search);
-      const ano = params.get("ano");
       const id = params.get("id");
-      const numero = params.get("numero");
 
-      if (!ano || (!id && !numero)) {
-        showStatus("Parâmetros inválidos na URL (é necessário informar 'ano' e 'id' ou 'numero').");
+      if (!id) {
+        showStatus("Parâmetro 'id' não encontrado na URL.");
         return;
       }
 
-      setSubtitulo(ano, numero, id);
       clearStatus();
       tbody.innerHTML = `<tr><td colspan="3" class="text-center py-4 text-muted">Carregando vagas...</td></tr>`;
-
-      const chave = id || numero; // tolerante aos dois formatos
-      const url = `/backend/editais/relatorio/listar/edital/${encodeURIComponent(ano)}/${encodeURIComponent(chave)}/`;
+      const url = `/backend/editais/relatorio/listar/edital/${encodeURIComponent(id)}/`;
 
       try {
         let resp = await fetchComToken(url, { method: "GET", credentials: "include" });
@@ -123,14 +118,14 @@
         vagas.forEach((vaga) => {
           const tr = document.createElement("tr");
           tr.innerHTML = `
-            <td>${vaga.descricao ?? "-"}</td>
-            <td class="text-center">${vaga.quantidade ?? "-"}</td>
-            <td class="text-end">
-              <button class="btn btn-danger btn-sm" onclick="baixarCSVVaga(${vaga.id}, '${(vaga.descricao || '').replace(/'/g, "\\'")}')">
-                <i class="bi bi-download me-1"></i> CSV
-              </button>
-            </td>
-          `;
+        <td>${vaga.descricao ?? "-"}</td>
+        <td class="text-center">${vaga.quantidade ?? "-"}</td>
+        <td class="text-end">
+          <button class="btn btn-danger btn-sm" onclick="baixarCSVVaga(${vaga.id}, '${(vaga.descricao || '').replace(/'/g, "\\'")}')">
+            <i class="bi bi-download me-1"></i> CSV
+          </button>
+        </td>
+      `;
           tbody.appendChild(tr);
         });
       } catch (error) {

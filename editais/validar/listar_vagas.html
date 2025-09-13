@@ -20,7 +20,6 @@
         <h1 class="h2 mb-0" id="titulo-edital">
           <i class="bi bi-list-check me-2"></i>Vagas para Validação
         </h1>
-        <div class="text-muted" id="subtitulo-edital"></div>
       </div>
       <div class="col-auto d-flex gap-2">
         <a href="listar_editais.html" class="btn btn-outline-secondary">
@@ -74,31 +73,30 @@
 
     async function carregarVagas() {
       const params = new URLSearchParams(window.location.search);
-      const ano = params.get("ano");
-      const numero = params.get("numero");
+      const id = params.get("id");
+
       const tbody = document.getElementById("vagas-list");
       const titulo = document.getElementById("titulo-edital");
-      const subtitulo = document.getElementById("subtitulo-edital");
 
-      if (!ano || !numero) {
-        showStatus("Parâmetros inválidos na URL.");
+      if (!id) {
+        showStatus("Parâmetro 'id' não encontrado na URL.");
         return;
       }
 
       titulo.innerHTML = `<i class="bi bi-list-check me-2"></i>Vagas para Validação`;
-      subtitulo.textContent = `Edital ${numero}/${ano}`;
       clearStatus();
       tbody.innerHTML = `<tr><td colspan="3" class="text-center py-4 text-muted">Carregando vagas...</td></tr>`;
 
       try {
-        let resp = await fetchComToken(`/backend/editais/validar/${ano}/${numero}/`, {
+        // A URL foi atualizada para a nova rota do backend, usando apenas o ID
+        let resp = await fetchComToken(`/backend/editais/validar/${encodeURIComponent(id)}/`, {
           method: "GET",
           credentials: "include",
         });
 
         if (resp.status === 401) {
           await refreshAccessToken();
-          resp = await fetchComToken(`/backend/editais/validar/${ano}/${numero}/`, {
+          resp = await fetchComToken(`/backend/editais/validar/${encodeURIComponent(id)}/`, {
             method: "GET",
             credentials: "include",
           });

@@ -1,10 +1,10 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-br">
 
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Editais para Validação</title>
+    <title>Envio de mensagem — Editais</title>
 
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" />
@@ -14,11 +14,10 @@
 <body>
     <div class="container py-5">
 
-        <!-- Cabeçalho -->
         <div class="row mb-4 align-items-center">
             <div class="col">
                 <h1 class="h2 mb-0">
-                    <i class="bi bi-journal-check me-2"></i>Editais para Validação
+                    <i class="bi bi-envelope-paper me-2"></i>Envio de mensagem para preenchimento de ficha
                 </h1>
             </div>
             <div class="col-auto d-flex gap-2">
@@ -31,31 +30,29 @@
             </div>
         </div>
 
-        <!-- Alert -->
         <div id="status" class="alert d-none" role="alert"></div>
 
-        <!-- Tabela -->
         <div class="table-responsive shadow-sm">
             <table class="table table-hover align-middle mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th class="text-center">Número</th>
-                        <th class="text-center">Ano</th>
-                        <th>Descrição</th>
-                        <th class="text-center">Data de validade</th>
+                        <th class="text-center">Edital</th>
+                        <th class="text-center">Início Validação</th>
+                        <th class="text-center">Fim Validação</th>
+                        <th class="text-center">Validade</th>
                         <th class="text-end">Ações</th>
                     </tr>
                 </thead>
-                <tbody id="tbody-editais">
+                <tbody id="editais-body">
                     <tr>
                         <td colspan="5" class="text-center py-4 text-muted">Carregando editais...</td>
                     </tr>
                 </tbody>
             </table>
         </div>
+
     </div>
 
-    <!-- Scripts -->
     <script src="../../extra/js/logout.js"></script>
     <script src="../../extra/js/fetchComToken.js"></script>
     <script src="../../extra/js/refreshAccessToken.js"></script>
@@ -66,20 +63,15 @@
             el.textContent = msg;
             el.classList.remove("d-none");
         }
-
         function clearStatus() {
             const el = document.getElementById("status");
             el.className = "alert d-none";
             el.textContent = "";
         }
-
-        const fmtData = (d) => {
-            try { return new Date(d).toLocaleDateString("pt-BR"); }
-            catch { return "-"; }
-        };
+        const fmtData = (d) => d ? new Date(d).toLocaleDateString("pt-BR") : "-";
 
         async function carregarEditais() {
-            const tbody = document.getElementById("tbody-editais");
+            const tbody = document.getElementById("editais-body");
             clearStatus();
             tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-muted">Carregando editais...</td></tr>`;
 
@@ -97,7 +89,10 @@
                     });
                 }
 
-                if (!resp.ok) throw new Error("Erro ao buscar editais.");
+                if (!resp.ok) {
+                    const err = await resp.json().catch(() => ({}));
+                    throw new Error(err.detail || "Erro ao buscar editais.");
+                }
 
                 const editais = await resp.json();
                 tbody.innerHTML = "";
@@ -107,24 +102,25 @@
                     return;
                 }
 
-                editais.forEach((e) => {
+                editais.forEach((ed) => {
                     const tr = document.createElement("tr");
                     tr.innerHTML = `
-            <td class="text-center">${e.numero ?? "-"}</td>
-            <td class="text-center">${e.ano ?? "-"}</td>
-            <td>${e.descricao ?? "-"}</td>
-            <td class="text-center">${e.data_validade ? fmtData(e.data_validade) : "-"}</td>
+            <td>${ed.edital_str ?? "-"}</td>
+            <td class="text-center">${fmtData(ed.data_inicio_validacao)}</td>
+            <td class="text-center">${fmtData(ed.data_fim_validacao)}</td>
+            <td class="text-center">${fmtData(ed.data_validade)}</td>
             <td class="text-end">
-              <a href="listar_vagas.html?ano=${encodeURIComponent(e.ano)}&numero=${encodeURIComponent(e.numero)}"
-                 class="btn btn-danger btn-sm">
-                <i class="bi bi-eye"></i> Ver Vagas
+              <a class="btn btn-danger btn-sm"
+                 href="listar_vagas.html?id=${encodeURIComponent(ed.id)}">
+                <i class="bi bi-eye me-1"></i> Ver vagas
               </a>
             </td>
           `;
                     tbody.appendChild(tr);
                 });
-            } catch (err) {
-                showStatus(err.message || "Falha ao carregar editais.");
+
+            } catch (e) {
+                showStatus(e.message || "Falha ao carregar editais.");
             }
         }
 

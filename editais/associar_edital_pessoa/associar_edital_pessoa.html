@@ -53,7 +53,6 @@
 <body>
   <div class="container py-5">
 
-    <!-- Cabeçalho -->
     <div class="row mb-4 align-items-center">
       <div class="col">
         <h1 class="h2 mb-0">
@@ -70,10 +69,8 @@
       </div>
     </div>
 
-    <!-- Alert global -->
     <div id="status" class="alert d-none" role="alert"></div>
 
-    <!-- Seleção de Edital -->
     <div class="card mb-4">
       <div class="card-header">
         <i class="bi bi-filter-square me-1"></i> Selecionar Edital
@@ -101,10 +98,8 @@
       </div>
     </div>
 
-    <!-- Gestão -->
     <div id="gerenciamento-container" style="display:none">
 
-      <!-- Formulário -->
       <div class="card mb-4">
         <div class="card-header">
           <i class="bi bi-plus-circle me-1"></i> Nova Associação
@@ -124,7 +119,6 @@
                 </div>
                 <div id="search-results" class="dropdown-menu w-100 mt-1" style="display:none"></div>
 
-                <!-- Selecionada -->
                 <div id="selected-pessoa" class="selected-pessoa mt-2 d-none">
                   <div class="d-flex justify-content-between align-items-center">
                     <div>
@@ -150,7 +144,6 @@
         </div>
       </div>
 
-      <!-- Lista -->
       <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
           <div><i class="bi bi-list-ul me-1"></i> Pessoas associadas ao edital</div>
@@ -179,7 +172,6 @@
     </div>
   </div>
 
-  <!-- Scripts comuns -->
   <script src="../../extra/js/logout.js"></script>
   <script src="../../extra/js/fetchComToken.js"></script>
   <script src="../../extra/js/refreshAccessToken.js"></script>
@@ -227,7 +219,7 @@
         editais.forEach(ed => {
           const o = document.createElement("option");
           o.value = ed.id;
-          o.textContent = `${ed.numero}/${ed.ano} — ${ed.descricao}`;
+          o.textContent = ed.edital_str;
           sel.appendChild(o);
         });
 
