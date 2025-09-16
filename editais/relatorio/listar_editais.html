@@ -68,6 +68,22 @@
     }
     const fmtData = (d) => d ? new Date(d).toLocaleDateString("pt-BR") : "-";
 
+    function showLocalStatus(buttonElement, msg, type = "danger") {
+      const statusRow = buttonElement.closest('tr').nextElementSibling;
+      const statusEl = statusRow.querySelector('.alert');
+      statusEl.className = `alert alert-${type} mt-2 mb-0`;
+      statusEl.textContent = msg;
+      statusEl.classList.remove('d-none');
+    }
+
+    function clearLocalStatus(buttonElement) {
+      const statusRow = buttonElement.closest('tr').nextElementSibling;
+      const statusEl = statusRow.querySelector('.alert');
+      if (statusEl) {
+        statusEl.classList.add('d-none');
+      }
+    }
+
     async function carregarEditais() {
       const tbody = document.getElementById("editais-body");
       clearStatus();
@@ -107,7 +123,7 @@
             <td>${fmtData(ed.data_validade)}</td>
             <td class="text-end">
               <div class="d-inline-flex gap-2">
-                <button class="btn btn-danger btn-sm" onclick="baixarCSV(${ed.id}, '${ed.edital_str ?? ""}')">
+                <button class="btn btn-danger btn-sm" onclick="baixarCSV(event, ${ed.id}, '${ed.edital_str ?? ""}')">
                   <i class="bi bi-download me-1"></i> Todas as vagas
                 </button>
                 <a class="btn btn-danger btn-sm"
@@ -118,6 +134,10 @@
             </td>
           `;
           tbody.appendChild(tr);
+
+          const statusRow = document.createElement("tr");
+          statusRow.innerHTML = `<td colspan="3"><div class="alert mt-2 mb-0 d-none"></div></td>`;
+          tbody.appendChild(statusRow);
         });
 
       } catch (e) {
@@ -125,8 +145,11 @@
       }
     }
 
-    async function baixarCSV(id, descricao) {
-      clearStatus();
+    async function baixarCSV(event, id, descricao) {
+      const button = event.currentTarget;
+      clearStatus(); // Limpa o status global
+      clearLocalStatus(button); // Limpa o status local
+
       try {
         let resp = await fetchComToken(`/backend/editais/relatorio/edital/${id}/`, {
           method: "GET",
@@ -143,9 +166,17 @@
           });
         }
 
-        if (!resp.ok) throw new Error("Erro ao baixar o CSV.");
+        if (!resp.ok) {
+          throw new Error("Erro ao baixar o CSV.");
+        }
 
         const blob = await resp.blob();
+        const text = await blob.text();
+        if (text.trim().length === 0) {
+          showLocalStatus(button, "Não há inscritos para gerar o relatório deste edital.", "warning");
+          return;
+        }
+
         const url = URL.createObjectURL(blob);
 
         // nome de arquivo amigável

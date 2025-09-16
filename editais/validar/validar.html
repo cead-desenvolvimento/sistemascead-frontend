@@ -292,6 +292,12 @@
               <td>
                 <textarea id="justificativa-${inscrito.cm_pessoa.id}" class="form-control" rows="3"
                   placeholder="Deixe em branco se não deseja justificar">${inscrito.justificativa || ""}</textarea>
+                <div class="form-check mt-2">
+                  <input class="form-check-input" type="checkbox" id="indeferido-${inscrito.cm_pessoa.id}" ${inscrito.indeferido ? 'checked' : ''}>
+                  <label class="form-check-label" for="indeferido-${inscrito.cm_pessoa.id}">
+                    Indeferir
+                  </label>
+                </div>
               </td>
               <td class="text-end">
                 <button class="btn btn-danger btn-sm" onclick="validarPontuacao(${inscrito.cm_pessoa.id})">
@@ -364,8 +370,17 @@
       if (error) { if (candError) candError.textContent = error; return; }
 
       const justificativa = (document.getElementById(`justificativa-${inscritoId}`)?.value || "").trim();
+      const indeferidoCheckbox = document.getElementById(`indeferido-${inscritoId}`);
+      const indeferido = indeferidoCheckbox?.checked || false;
+
       if (candError) candError.textContent = "";
       clearStatus();
+
+      if (indeferido) {
+        for (const key in pontuacoesDocumentos) {
+          pontuacoesDocumentos[key] = 0;
+        }
+      }
 
       try {
         let resp = await fetchComToken(`/backend/editais/validar/vaga/${vagaId}/`, {
@@ -377,6 +392,7 @@
             justificativa: justificativa,
             arquivo_valido: arquivosValidos,
             pontuacoes_documentos: pontuacoesDocumentos,
+            indeferido: indeferido,
           }),
         });
 
@@ -391,6 +407,7 @@
               justificativa: justificativa,
               arquivo_valido: arquivosValidos,
               pontuacoes_documentos: pontuacoesDocumentos,
+              indeferido: indeferido,
             }),
           });
         }
@@ -398,12 +415,7 @@
         const data = await resp.json().catch(() => ({}));
         if (!resp.ok) throw new Error(data.detail || "Erro ao validar documentos.");
 
-        // atualiza linha do validador
-        const alvo = document.getElementById(`validador-${inscritoId}`);
-        if (alvo) {
-          const novoValidador = await buscarValidador(vagaId, inscritoId);
-          alvo.textContent = novoValidador;
-        }
+        await carregarInscritos(currentPage, document.getElementById("page-size-select").value);
 
         showStatus("Validação realizada com sucesso!", "success");
         setTimeout(() => clearStatus(), 3000);
