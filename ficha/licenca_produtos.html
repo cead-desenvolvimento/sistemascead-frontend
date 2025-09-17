@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Licença de Produtos</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" rel="stylesheet" />
+    <link href="../extra/css/principal.css" rel="stylesheet" />
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+</head>
+
+<body>
+    <div class="container py-5">
+
+        <div class="row mb-4 align-items-center">
+            <div class="col">
+                <h1 class="h2 mb-0">
+                    <i class="bi bi-file-earmark-text me-2"></i>Licença de Produtos
+                </h1>
+            </div>
+        </div>
+
+        <div id="mensagem"></div>
+
+        <form id="form-licenca-produtos" novalidate>
+            <h5 class="mt-4 mb-3 border-bottom pb-2">
+                <i class="bi bi-info-circle me-2"></i>Tipo de Licença
+            </h5>
+            <p>
+                Com relação aos produtos, por mim elaborados, exclusivamente ou em coautoria, em atividades exercidas em
+                decorrência da percepção de parcelas desta bolsa:
+            </p>
+            <p class="text-muted small fst-italic">
+                Uma das opções abaixo deverá ser assinalada de acordo com a licença selecionada
+            </p>
+
+            <div class="form-check mb-3">
+                <input class="form-check-input" type="radio" name="tipo_licenca" id="licencaA" value="A" required>
+                <label class="form-check-label" for="licencaA">
+                    <b>(a)</b> Autorizo sem qualquer restrição, o licenciamento aberto do produto pela instituição de
+                    Ensino ou
+                    pela CAPES, por meio da licença Creative Commons ou similar. Desde que atribuam o devido crédito
+                    pela criação
+                    original, em conformidade com as orientações de DED/CAPES em vigor.
+                </label>
+            </div>
+
+            <div class="form-check mb-3">
+                <input class="form-check-input" type="radio" name="tipo_licenca" id="licencaB" value="B" required>
+                <label class="form-check-label" for="licencaB">
+                    <b>(b)</b> Informo que o tipo de licença será informado em momento oportuno e caso não informado
+                    autorizo a
+                    licença CC-BY-AS.
+                </label>
+            </div>
+
+            <div class="form-check mb-3">
+                <input class="form-check-input" type="radio" name="tipo_licenca" id="licencaC" value="C" required>
+                <label class="form-check-label" for="licencaC">
+                    <b>(c)</b> CC-BY-NC-SA: esta licença permite que outros remixem, adaptem e criem a partir do seu
+                    trabalho para
+                    fins não comerciais, desde que atribuam o devido crédito e que licenciem as novas criações sob
+                    termos
+                    idênticos.
+                </label>
+            </div>
+
+            <div class="mt-4 d-flex justify-content-end gap-2">
+                <a href="javascript:history.back()" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-1"></i> Voltar
+                </a>
+                <button type="submit" class="btn btn-danger">
+                    <i class="bi bi-arrow-right me-1"></i> Continuar
+                </button>
+            </div>
+        </form>
+
+    </div>
+
+    <script>
+        function mostrarErro(mensagem) {
+            const box = document.getElementById("mensagem");
+            box.innerHTML = `<div class="alert alert-danger" role="alert"><i class="bi bi-exclamation-triangle-fill me-2"></i>${mensagem}</div>`;
+            box.scrollIntoView({
+                behavior: "smooth"
+            });
+        }
+
+        document.getElementById("form-licenca-produtos").addEventListener("submit", (e) => {
+            e.preventDefault();
+            const form = e.target;
+            if (!form.checkValidity()) {
+                form.classList.add("was-validated");
+                return;
+            }
+            form.classList.remove("was-validated");
+            document.getElementById("mensagem").innerHTML = "";
+
+            const licenca = document.querySelector('input[name="tipo_licenca"]:checked').value;
+
+            fetch("/backend/ficha/salvar_licenca/", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                credentials: "include",
+                body: JSON.stringify({
+                    licenca_produtos: licenca
+                }),
+            })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(errorData => {
+                            throw new Error(errorData.detail || "Erro ao salvar a licença.");
+                        });
+                    }
+                    return response.json();
+                })
+                .then(() => {
+                    window.location.href = "gera_ficha.html";
+                })
+                .catch(error => {
+                    mostrarErro(error.message);
+                });
+        });
+    </script>
+</body>
+
+</html>
